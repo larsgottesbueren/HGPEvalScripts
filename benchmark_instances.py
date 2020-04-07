@@ -26,5 +26,5 @@ instance_grouper = ["graph", "k", "epsilon"]
 ps_hgs = [hg.strip() for hg in open('parameter_tuning_set.txt', 'r')]
 ps_instances = list(itertools.product(ps_hgs, ks, epss))
 
-setC = [hg.strip() for hg in open('setC.txt', 'r')]
-setC_instances = list(itertools.product(setC, ks, epss))
+setB = [hg.strip() for hg in open('setB.txt', 'r')]
+setB_instances = list(itertools.product(setB, ks, epss))
