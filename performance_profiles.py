@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as grd
 import copy
 import color_scheme
-from benchmark_instances import *
+
 import scales
 
 import tikzplotlib
@@ -125,7 +125,7 @@ def performance_profiles(algos, instances, input_df, plotname, instance_grouper 
 	return output_df
 
 
-def plot(plotname, display_legend="Yes", title=None, grid=True, width_scale=1.0):
+def plot(plotname, display_legend="Yes", title=None, grid=True, width_scale=1.0, colors=color_scheme.algo_colors):
 	df = pd.read_csv(plotname + "_performance_profile.csv")
 	algos = df.algorithm.unique()
 	
@@ -161,10 +161,11 @@ def plot(plotname, display_legend="Yes", title=None, grid=True, width_scale=1.0)
 		ax.set_yticklabels(ax.get_yticklabels(), visible=False)
 		ax.yaxis.set_ticks_position('none')
 	
+
 	for algo in algos:
 		algo_df = df[df.algorithm == algo]
 		for ax in axes:
-			ax.plot(algo_df["ratio"], algo_df["fraction"], color=color_scheme.algo_colors[algo], lw=2.2, label=algo)
+			ax.plot(algo_df["ratio"], algo_df["fraction"], color=colors[algo], lw=2.2, label=algo)
 			
 	if display_legend == "Yes":
 		if len(algos) < 5:
@@ -227,6 +228,8 @@ def plot(plotname, display_legend="Yes", title=None, grid=True, width_scale=1.0)
 	plt.close(fig)
 
 if __name__ == "__main__":
+
+	from benchmark_instances import *
 
 	files = [
 		'KaHyPar-HFC-mfstyle.csv', 'KaHyPar-HFC.csv', 'KaHyPar-MF.csv',
