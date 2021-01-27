@@ -27,8 +27,9 @@ def plot(df, colors=color_scheme.algo_colors, algo_order=color_scheme.algos_orde
 	
 	plt.setp(ax.xaxis.get_majorticklabels(), rotation=20, ha="right", rotation_mode="anchor")
 	#ax.set_yscale('cuberoot')
-	ax.set_yscale('fifthroot')
-	ax.set(yticks=[0, 1, 20, 75, 250, 750, 2500, 10000, 28800])
+	#ax.set_yscale('fifthroot')
+	ax.set_yscale('log')
+	#ax.set(yticks=[0, 1, 20, 75, 250, 750, 2500, 10000, 28800])
 	ax.set_ylabel('Time [s]')
 	ax.xaxis.label.set_visible(False)
 	

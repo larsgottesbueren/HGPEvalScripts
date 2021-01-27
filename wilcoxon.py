@@ -12,14 +12,8 @@ algos = [sys.argv[1], sys.argv[2]]
 instance_grouper = ["graph", "k", "epsilon"]
 objective = "km1"
 
-files = [
-	'KaHyPar-HFC-mfstyle.csv', 'KaHyPar-HFC.csv', 'KaHyPar-MF.csv',
-	'km1_patoh_q.csv', 'km1_patoh_d.csv',
-	'km1_hmetis_r.csv', 'km1_hmetis_k.csv',
-	'km1_zoltan_algd.csv',
-	'km1_mondriaan.csv', 
-	'km1_hype.csv'
-	]
+files = sys.argv[3:]
+
 df = pd.concat(map(pd.read_csv, files))
 
 df = df[(df.algorithm.isin(algos)) & (df.timeout == "no") & (df.totalPartitionTime < time_limit) & (df.imbalance <= df.epsilon)].copy()

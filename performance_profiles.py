@@ -8,7 +8,7 @@ import color_scheme
 
 import scales
 
-import tikzplotlib
+#import tikzplotlib
 
 max_flow = 2147483647
 time_limit = 28800
@@ -20,13 +20,14 @@ do_not_plot_ratio = max_flow
 
 performance_profile_fraction_scaling = 1
 
+
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 plt.rc('pgf', rcfonts=False)
 plt.rc('font', size=13)
 
-plt.rcParams['text.latex.preamble'] = [R'\usepackage{pifont}']
-plt.rcParams['pgf.preamble'] = [R'\usepackage{pifont}']
+plt.rcParams['text.latex.preamble'] = R'\usepackage{pifont}'
+plt.rcParams['pgf.preamble'] = R'\usepackage{pifont}'
 
 # Returns for each algorithm the tau's at which the number of instances solved within tau*best jumps
 def performance_profiles(algos, instances, input_df, plotname, instance_grouper = ["graph", "k", "epsilon"], objective="km1"):
@@ -125,7 +126,7 @@ def performance_profiles(algos, instances, input_df, plotname, instance_grouper 
 	return output_df
 
 
-def plot(plotname, display_legend="Yes", title=None, grid=True, width_scale=1.0, colors=color_scheme.algo_colors):
+def plot(plotname, display_legend="Yes", title=None, grid=True, width_scale=1.0, colors):
 	df = pd.read_csv(plotname + "_performance_profile.csv")
 	algos = df.algorithm.unique()
 	
