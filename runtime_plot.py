@@ -65,3 +65,4 @@ if __name__ == '__main__':
 
 	algos = commons.infer_algorithms_from_dataframe(df)
 	plot(averaged_runtimes, colors=commons.construct_new_color_mapping(algos), algo_order=algos, plot_name=plot_name)
+	print_gmean_times(averaged_runtimes)
