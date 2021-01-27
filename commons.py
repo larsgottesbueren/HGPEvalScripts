@@ -1,5 +1,12 @@
+import pandas as pd
+import seaborn as sb
+import itertools
+
+def construct_new_color_mapping(algos):
+	return dict(zip(algos, sb.color_palette()))
+
 def infer_algorithms_from_dataframe(df):
-	return df.algorithm.unique()
+	return list(df.algorithm.unique())
 
 def infer_instances_from_dataframe(df):
 	ks = df.k.unique()

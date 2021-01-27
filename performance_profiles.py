@@ -4,7 +4,6 @@ import seaborn as sb
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as grd
 import copy
-import color_scheme
 
 import scales
 
@@ -126,7 +125,7 @@ def performance_profiles(algos, instances, input_df, plotname, instance_grouper 
 	return output_df
 
 
-def plot(plotname, display_legend="Yes", title=None, grid=True, width_scale=1.0, colors):
+def plot(plotname, colors, display_legend="Yes", title=None, grid=True, width_scale=1.0):
 	df = pd.read_csv(plotname + "_performance_profile.csv")
 	algos = df.algorithm.unique()
 	
@@ -228,61 +227,14 @@ def plot(plotname, display_legend="Yes", title=None, grid=True, width_scale=1.0,
 	#tikzplotlib.save(plotname + "_performance_profile.tikz")
 	plt.close(fig)
 
-if __name__ == "__main__":
-
-	from benchmark_instances import *
-
-	files = [
-		'KaHyPar-HFC-mfstyle.csv', 'KaHyPar-HFC.csv', 'KaHyPar-MF.csv',
-		'km1_patoh_q.csv', 'km1_patoh_d.csv',
-		'km1_hmetis_r.csv', 'km1_hmetis_k.csv',
-		'km1_zoltan_algd.csv',
-		'km1_mondriaan.csv', 
-		'km1_hype.csv'
-		]
+if __name__ == '__main__':
+	import sys, commons
+	plot_name = sys.argv[1]
+	files = sys.argv[2:]
 	df = pd.concat(map(pd.read_csv, files))
 
-	algos = color_scheme.algos_ordered_by_solution_quality.copy()
-
-	#performance_profiles(['KaHyPar-HFC*', 'KaHyPar-MF'], instances, df, "mf_vs_hfc-mfstyle")
-	#performance_profiles(['KaHyPar-HFC', 'KaHyPar-MF'], instances, df, "mf_vs_hfc")
-	#performance_profiles(algos, instances, df, "all")
-
-	for x in ["hMetis-K", "KaHyPar-HFC", "KaHyPar-MF", "PaToH-D"]:
-		algos.remove(x)
-	#performance_profiles(algos, instances, df, "best_configs")
-
-	algos = color_scheme.algos_ordered_by_solution_quality.copy()
-	for x in ["hMetis-K", "KaHyPar-HFC*", "KaHyPar-MF", "PaToH-D"]:
-		algos.remove(x)
-	#performance_profiles(algos, instances, df, "hfc_vs_best_configs")
-
-	plot("hfc_vs_best_configs", width_scale=1.0)
-	plot("best_configs", width_scale=1.0)
-	plot("mf_vs_hfc-mfstyle")
-	plot("mf_vs_hfc")
-	plot("all", width_scale=2.0)
-
-	def performance_profile_per_k():
-		algos = color_scheme.algos_ordered_by_solution_quality.copy()
-		
-		for k in ks:
-			inst_with_k = list(filter(lambda x : x[1] == k, instances))
-			#performance_profiles(algos, inst_with_k, df, "plot_per_k/" + str(k))
-			plot("plot_per_k/" + str(k), display_legend="plot_per_k/legend", title="k=" + str(k))
-
-
-	def performance_profile_per_instance_class():
-		algos = color_scheme.algos_ordered_by_solution_quality.copy()
-
-		for suffix, category in category_map.items():
-			inst_with_cat = list(filter(lambda x : suffix in x[0], instances))
-			#performance_profiles(algos, inst_with_cat, df, "plot_per_instance_class/" + category)
-			plot("plot_per_instance_class/" + category, display_legend="plot_per_instance_class/legend", title=category)
-		
-		
-
-	performance_profile_per_k()
-	performance_profile_per_instance_class()
-
-
+	commons.conversion(df)
+	algos = commons.infer_algorithms_from_dataframe(df)
+	instances = commons.infer_instances_from_dataframe(df)
+	performance_profiles(algos, instances, df, plot_name)
+	plot(plot_name, colors=commons.construct_new_color_mapping(algos))

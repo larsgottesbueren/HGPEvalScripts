@@ -3,13 +3,12 @@ import pandas as pd
 import seaborn as sb
 import matplotlib.pyplot as plt
 import scipy.stats.mstats
-import color_scheme
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 plt.rc('font', size=11.5)
 
-def plot(df, colors=color_scheme.algo_colors, algo_order=color_scheme.algos_ordered_for_runtime_plot):
+def plot(df, colors, algo_order, plot_name=''):
 	fig, ax = plt.subplots(figsize=(7,3.5))
 	boxprops = dict(fill=False,edgecolor='black', linewidth=0.9, zorder=2)
 	rem_props = dict(linestyle='-', linewidth=0.9, color='black')
@@ -33,7 +32,13 @@ def plot(df, colors=color_scheme.algo_colors, algo_order=color_scheme.algos_orde
 	ax.set_ylabel('Time [s]')
 	ax.xaxis.label.set_visible(False)
 	
-	fig.savefig("runtime_plot.pdf", bbox_inches="tight", pad_inches=0.0)
+	if plot_name == '':
+		file_name = 'runtime_plot.pdf'
+	else:
+		file_name = plot_name + '_runtime_plot.pdf'
+
+	# TODO make function return the figure, then let caller save
+	fig.savefig(file_name, bbox_inches="tight", pad_inches=0.0)
 	#fig.savefig("runtime_plot.pgf", bbox_inches="tight", pad_inches=0.0)
 	#plt.close()
 
@@ -48,19 +53,15 @@ def print_gmean_times(df):
 		print("Algo", algo, "gmean time", scipy.stats.mstats.gmean( df[df.algorithm==algo]["totalPartitionTime"] ))
 
 if __name__ == '__main__':
+	import sys, commons
+	plot_name = sys.argv[1]
+	files = sys.argv[2:]
 
-	files = [
-		'KaHyPar-HFC-mfstyle.csv', 'KaHyPar-HFC.csv', 'KaHyPar-MF.csv',
-		'km1_patoh_q.csv', 'km1_patoh_d.csv',
-		'km1_hmetis_r.csv', 'km1_hmetis_k.csv',
-		'km1_zoltan_algd.csv',
-		'km1_mondriaan.csv', 
-		'km1_hype.csv'
-		]
 	df = pd.concat(map(pd.read_csv, files))
+	commons.conversion(df)
 	df = df[df.failed == "no"]
 
-
 	averaged_runtimes = aggregate_dataframe_by_arithmetic_mean_per_instance(df)
-	print_gmean_times(averaged_runtimes)
-	plot(averaged_runtimes)
+
+	algos = commons.infer_algorithms_from_dataframe(df)
+	plot(averaged_runtimes, colors=commons.construct_new_color_mapping(algos), algo_order=algos, plot_name=plot_name)
