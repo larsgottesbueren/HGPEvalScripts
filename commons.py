@@ -23,3 +23,8 @@ def conversion(df):
 	add_column_if_missing(df, 'failed', 'no')
 	add_column_if_missing(df, 'timeout', 'no')
 	df.rename(columns={'partitionTime' : 'totalPartitionTime'}, inplace=True)
+
+def read_and_convert(file):
+	df = pd.read_csv(file)
+	conversion(df)
+	return df
