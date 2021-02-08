@@ -32,9 +32,12 @@ def plot(plotname, df, baseline_algorithm, colors, field='km1'):
             my_val = row[field]
             baseline_val = baseline_df.loc[baseline_key][field]
             if my_val <= baseline_val:
-                return 1.0 - float(my_val)/float(baseline_val)
+            	if baseline_val == 0:
+            		return 0.0		# equal
+            	else:
+                	return 1.0 - float(my_val)/float(baseline_val)
             else:
-                return -1.0 + float(baseline_val)/float(my_val)
+            	return -1.0 + float(baseline_val)/float(my_val)
 
             return row[field] / baseline_df.loc[baseline_key][field]
         else:
