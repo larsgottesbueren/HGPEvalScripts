@@ -67,7 +67,7 @@ def performance_profiles(algos, instances, input_df, plotname, instance_grouper 
 					if best != 0:
 						r = obj / best
 						if r >= timeout_ratio:
-							#print("Warning. Performance ratio greater than timeout ratio. Will not be in plot!", r, algo, G, k, eps)
+							print("Warning. Performance ratio greater than timeout ratio. Will not be in plot!", r, algo, G, k, eps)
 							r = do_not_plot_ratio
 						if r < 1:
 							print("r < 1", G, k, algo, obj, best, r)
@@ -77,7 +77,7 @@ def performance_profiles(algos, instances, input_df, plotname, instance_grouper 
 						else:
 							r = obj + 1
 							if r >= timeout_ratio:
-								#print("Warning. Performance ratio greater than timeout ratio. Best = 0. Will not be in plot!", r, algo, G, k, eps)
+								print("Warning. Performance ratio greater than timeout ratio. Best = 0. Will not be in plot!", r, algo, G, k, eps)
 								r = do_not_plot_ratio
 			else:
 				r = timeout_ratio
@@ -104,11 +104,11 @@ def performance_profiles(algos, instances, input_df, plotname, instance_grouper 
 		for i, r in enumerate(ratios[algo]):
 			if last_ratio != r:
 				if last_ratio > 0.95:
-					output.append((algo, i * performance_profile_fraction_scaling / n, last_ratio))
+					#output.append((algo, i * performance_profile_fraction_scaling / n, last_ratio))
 					output.append((algo, i * performance_profile_fraction_scaling / n, r))		# first occurence of r
 				last_ratio = r
 
-		output.append((algo, len(ratios[algo]) * performance_profile_fraction_scaling / n, last_ratio))
+		#output.append((algo, len(ratios[algo]) * performance_profile_fraction_scaling / n, last_ratio))
 		output.append((algo, len(ratios[algo]) * performance_profile_fraction_scaling / n, last_drawn_ratio))	# draw the step function to the rightmost x-value
 
 		# interesting_ratios = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8, 2]
@@ -131,7 +131,7 @@ def plot(plotname, colors, display_legend="Yes", title=None, grid=True, width_sc
 	
 	max_ratio = df.ratio.max()
 	last_drawn_ratio = min(imbalanced_ratio, max_ratio)
-	bb = [0.995, 1.1, 2, last_drawn_ratio + 800]
+	bb = [0.995, 1.1, 2, last_drawn_ratio * 1.05]
 	ymax = 1.01 * performance_profile_fraction_scaling
 
 	nbuckets = len(bb) - 1
@@ -164,8 +164,9 @@ def plot(plotname, colors, display_legend="Yes", title=None, grid=True, width_sc
 
 	for algo in algos:
 		algo_df = df[df.algorithm == algo]
-		for ax in axes:
-			ax.plot(algo_df["ratio"], algo_df["fraction"], color=colors[algo], lw=2.2, label=algo)
+		for i, ax in enumerate(axes):
+			#ax.plot(algo_df["ratio"], algo_df["fraction"], color=colors[algo], lw=2.2, label=algo)
+			ax.step(algo_df["ratio"], algo_df["fraction"], color=colors[algo], lw=2.2, label=algo)
 			
 	if display_legend == "Yes":
 		if len(algos) < 5:
@@ -231,9 +232,7 @@ if __name__ == '__main__':
 	import sys, commons
 	plot_name = sys.argv[1]
 	files = sys.argv[2:]
-	df = pd.concat(map(pd.read_csv, files))
-
-	commons.conversion(df)
+	df = commons.read_files(files)
 	algos = commons.infer_algorithms_from_dataframe(df)
 	instances = commons.infer_instances_from_dataframe(df)
 	performance_profiles(algos, instances, df, plot_name)
