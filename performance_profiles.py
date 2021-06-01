@@ -49,9 +49,9 @@ def performance_profiles(algos, instances, input_df, plotname="nothing", objecti
 
 		if not instance in best_per_instance:
 			unsolved.add(instance) 
-			print("no algo solved", instance)
-			for algo in algos:
-				ratios[algo].append(no_algo_solved_ratio)
+			# print("no algo solved", instance)
+			# for algo in algos:
+			# 	ratios[algo].append(no_algo_solved_ratio)
 			continue
 
 		best = best_per_instance.loc[instance]
