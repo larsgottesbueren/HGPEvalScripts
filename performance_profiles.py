@@ -11,16 +11,13 @@ import scipy.stats
 
 #import tikzplotlib
 
-max_flow = 2147483647
+max_objective = 2147483647
 time_limit = 28800
-timeout_ratio = 8000
-no_algo_solved_ratio = timeout_ratio
-imbalanced_ratio = 16000
-do_not_plot_ratio = max_flow
-
+no_algo_solved_ratio = max_objective-1
+imbalanced_ratio = max_objective-2
+timeout_ratio = max_objective-3
 
 performance_profile_fraction_scaling = 1
-
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
@@ -32,6 +29,7 @@ plt.rcParams['pgf.preamble'] = R'\usepackage{pifont}'
 
 # Returns for each algorithm the tau's at which the number of instances solved within tau*best jumps
 def performance_profiles(algos, instances, input_df, plotname="nothing", objective="km1"):
+	print(input_df)
 	df = input_df[input_df.algorithm.isin(algos)].copy()
 
 	instance_grouper = ["graph", "k", "epsilon"]
@@ -39,7 +37,6 @@ def performance_profiles(algos, instances, input_df, plotname="nothing", objecti
 	balanced = in_time[(in_time.imbalance <= in_time.epsilon) & (in_time.failed == "no")].copy()
 	in_time_index = in_time.groupby(instance_grouper + ["algorithm"]).mean()
 	balanced_index = balanced.groupby(instance_grouper + ["algorithm"]).mean()
-
 	best_per_instance = balanced_index[objective].groupby(level=instance_grouper).min()
 
 	ratios = defaultdict(list)
@@ -69,9 +66,6 @@ def performance_profiles(algos, instances, input_df, plotname="nothing", objecti
 					obj = balanced_index.loc[key][objective]
 					if best != 0:
 						r = obj / best
-						if r >= timeout_ratio:
-							print("Warning. Performance ratio greater than timeout ratio. Will not be in plot!", r, algo, G, k, eps)
-							r = do_not_plot_ratio
 						if r < 1:
 							print("r < 1", G, k, algo, obj, best, r)
 					else:
@@ -79,23 +73,14 @@ def performance_profiles(algos, instances, input_df, plotname="nothing", objecti
 							r = 1
 						else:
 							r = obj + 1
-							if r >= timeout_ratio:
-								print("Warning. Performance ratio greater than timeout ratio. Best = 0. Will not be in plot!", r, algo, G, k, eps)
-								r = do_not_plot_ratio
 			else:
 				r = timeout_ratio
-
-
-				#print("only timeouts", algo, G, k, eps)
-			if r != do_not_plot_ratio:
-				ratios[algo].append(r)
-
-
-			#if r > 1.3:
-			#	print(r, algo, instance)
-
+			ratios[algo].append(r)
 
 	print(len(unsolved), "instances unsolved")
+	print(algos)
+	for algo in algos:
+		print(algo, len(ratios[algo]))
 	max_ratio = max( max(ratios[algo]) for algo in algos )
 	print("max ratio = ", max_ratio)
 	for algo in algos:
@@ -106,16 +91,12 @@ def performance_profiles(algos, instances, input_df, plotname="nothing", objecti
 	output = []
 	for algo in algos:
 		ratios[algo].sort()
-		last_ratio = 0.95
-		for i, r in enumerate(ratios[algo]):
-			if last_ratio != r:
-				if last_ratio > 0.95:
-					#output.append((algo, i * performance_profile_fraction_scaling / n, last_ratio))
-					output.append((algo, i * performance_profile_fraction_scaling / n, r))		# first occurence of r
-				last_ratio = r
+		for i, (r_prev, r) in enumerate(zip(ratios[algo], ratios[algo][1:])):
+			if r_prev != r:
+				output.append((algo, i * performance_profile_fraction_scaling / n, r_prev))		# last occurence of r_prev
 
-		#output.append((algo, len(ratios[algo]) * performance_profile_fraction_scaling / n, last_ratio))
-		output.append((algo, len(ratios[algo]) * performance_profile_fraction_scaling / n, last_drawn_ratio))	# draw the step function to the rightmost x-value
+		output.append((algo, (len(ratios[algo])-1) * performance_profile_fraction_scaling / n, ratios[algo][-1]))
+		# output.append((algo, len(ratios[algo]) * performance_profile_fraction_scaling / n, last_drawn_ratio))	# draw the step function to the rightmost x-value
 
 
 	output_df = pd.DataFrame(data=output, columns=["algorithm", "fraction", "ratio"])
