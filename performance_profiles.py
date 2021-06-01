@@ -7,6 +7,8 @@ import copy
 
 import scales
 
+import scipy.stats
+
 #import tikzplotlib
 
 max_flow = 2147483647
@@ -88,13 +90,16 @@ def performance_profiles(algos, instances, input_df, plotname="nothing", objecti
 			if r != do_not_plot_ratio:
 				ratios[algo].append(r)
 
+
+			#if r > 1.3:
+			#	print(r, algo, instance)
+
+
 	print(len(unsolved), "instances unsolved")
 	max_ratio = max( max(ratios[algo]) for algo in algos )
 	print("max ratio = ", max_ratio)
-	print("Plot name", plotname)
 	for algo in algos:
-		print(algo, "solved", len(solved[algo]), "instances")
-
+		print(algo, "solved", len(solved[algo]), "instances. gmean performance ratio", scipy.stats.gmean(ratios[algo]))
 
 	last_drawn_ratio = min(imbalanced_ratio, max_ratio)
 	
