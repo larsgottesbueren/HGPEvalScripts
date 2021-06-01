@@ -13,7 +13,7 @@ import scipy.stats
 
 max_flow = 2147483647
 time_limit = 28800
-timeout_ratio = 2000
+timeout_ratio = 8000
 no_algo_solved_ratio = timeout_ratio
 imbalanced_ratio = 16000
 do_not_plot_ratio = max_flow

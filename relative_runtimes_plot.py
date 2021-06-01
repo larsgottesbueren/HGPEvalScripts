@@ -34,13 +34,15 @@ def plot(plotname, df, baseline_algorithm, colors, field='totalPartitionTime'):
     df["relative_time"] = df.apply(relative_time, axis='columns')
     df.sort_values(by=["relative_time"], inplace=True)
 
-    #pd.set_option('display.max_rows', None)
-    #pd.set_option('display.max_colwidth', None)
+   # print(field)
 
-    #slower = df[(df[field] > 1) & (df.relative_time > 1.03)]
-    #print("slower\n", slower[["graph", "k", "relative_time", field]])
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_colwidth', None)
 
-    #faster = df[(df[field] > 1) & (df.relative_time < 0.97)]
+    #slower = df[(df.relative_time > 1.35)]
+    #print("slower\n", slower[["algorithm","graph", "k", "relative_time", field]])
+
+    #faster = df[(df[field] > 0) & (df.relative_time < 0.1)]
     #print("faster\n", faster[["graph", "k", "relative_time", field]])
     #exit()
 
@@ -69,7 +71,8 @@ def plot(plotname, df, baseline_algorithm, colors, field='totalPartitionTime'):
 
     #plt.xticks(custom_ticks)
     
-    fig.savefig(plotname + "_base_" + baseline_algorithm + "_relative_slowdown.pdf", bbox_inches='tight')
+    fig.savefig(plotname + "_relative_slowdown.pdf", bbox_inches='tight')
+    #fig.savefig(plotname + ".pdf", bbox_inches='tight')
 
 
 if __name__ == '__main__':
@@ -79,4 +82,8 @@ if __name__ == '__main__':
     files = sys.argv[3:]
     df = commons.read_files(files)
     algos = commons.infer_algorithms_from_dataframe(df)
-    plot(plotname, df, baseline_algorithm, colors= commons.construct_new_color_mapping(algos))
+    plot(plotname + "_total", df, baseline_algorithm, colors= commons.construct_new_color_mapping(algos), field="totalPartitionTime")
+    #plot(plotname + "_lp", df, baseline_algorithm, colors= commons.construct_new_color_mapping(algos), field="lpTime")
+    #plot(plotname + "_coarsening", df, baseline_algorithm, colors= commons.construct_new_color_mapping(algos), field="coarseningTime")
+    #plot(plotname + "_initial", df, baseline_algorithm, colors= commons.construct_new_color_mapping(algos), field="ipTime")
+    #plot(plotname + "_preprocessing", df, baseline_algorithm, colors= commons.construct_new_color_mapping(algos), field="preprocessingTime")
