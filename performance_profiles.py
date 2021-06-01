@@ -177,7 +177,7 @@ def plot(plotname, df, colors, display_legend="Yes", title=None, grid=True, widt
 
 	for i in range(nbuckets):
 		axes[i].set_xlim(bb[i], bb[i+1])
-		axes[i].set_ylim(0, ymax)
+		axes[i].set_ylim(-0.01, ymax)
 		if grid:
 			axes[i].grid(b=True, axis='both', which='major', ls='dashed')
 
@@ -227,5 +227,5 @@ if __name__ == '__main__':
 	df = commons.read_files(files)
 	algos = commons.infer_algorithms_from_dataframe(df)
 	instances = commons.infer_instances_from_dataframe(df)
-	performance_profiles(algos, instances, df, plot_name)
-	plot(plot_name, colors=commons.construct_new_color_mapping(algos))
+	ratios_df = performance_profiles(algos, instances, df, plot_name, objective="km1")
+	plot(plot_name, ratios_df, colors=commons.construct_new_color_mapping(algos))
