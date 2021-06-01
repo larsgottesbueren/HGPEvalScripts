@@ -8,6 +8,7 @@ import copy
 import scales
 
 import scipy.stats
+import math
 
 #import tikzplotlib
 
@@ -29,7 +30,6 @@ plt.rcParams['pgf.preamble'] = R'\usepackage{pifont}'
 
 # Returns for each algorithm the tau's at which the number of instances solved within tau*best jumps
 def performance_profiles(algos, instances, input_df, plotname="nothing", objective="km1"):
-	print(input_df)
 	df = input_df[input_df.algorithm.isin(algos)].copy()
 
 	instance_grouper = ["graph", "k", "epsilon"]
@@ -107,13 +107,26 @@ def plot(plotname, df, colors, display_legend="Yes", title=None, grid=True, widt
 	algos = df.algorithm.unique()
 	
 	max_ratio = df.ratio.max()
-	last_drawn_ratio = min(imbalanced_ratio, max_ratio)		# TODO fix this. should be just max_ratio + some tiny buffer
-	#last_drawn_ratio = 50
+	max_actual_ratio = df[df.ratio < timeout_ratio].ratio.max()
+	show_timeout_tick = max_ratio >= timeout_ratio
+	show_imbalanced_tick = max_ratio >= imbalanced_ratio
+
+	base = math.ceil(math.log10(max_actual_ratio))
+	if (math.log10(max_actual_ratio).is_integer()):
+		base += 1
+	remapped_timeout_ratio = 10 ** base
+	remapped_imbalanced_ratio = 10 ** (base + 1)
+	if show_timeout_tick:
+		print("do remap")
+		df.ratio.replace(to_replace={timeout_ratio : remapped_timeout_ratio, imbalanced_ratio : remapped_imbalanced_ratio}, inplace=True)
+	
+
+	last_drawn_ratio = df.ratio.max()
 	bb = [0.995, 1.1, 2, last_drawn_ratio * 1.05]
 	ymax = 1.01 * performance_profile_fraction_scaling
 
 	nbuckets = len(bb) - 1
-	for i in range(len(bb) -1):
+	for i in range(len(bb) - 1):
 		if bb[i] > max_ratio:
 			nbuckets = i
 			break
@@ -179,17 +192,17 @@ def plot(plotname, df, colors, display_legend="Yes", title=None, grid=True, widt
 			axes[0].set_xticks([1, 1.05, 1.1])
 			axes[1].set_xticks([1.5, 2.0])
 
-
-	if max_ratio >= 900:
+	
+	if last_drawn_ratio >= 500 or show_timeout_tick:
 		axes[nbuckets - 1].set_xscale('log')
 		#axes[nbuckets - 1].set_xscale('fifthroot')
-	if max_ratio >= timeout_ratio:			#  TODO fix this by letting the other function return which cases we need
-		ticks = [bb[nbuckets-1], 10, 100]
+	if show_timeout_tick:
+		ticks = [10 ** i for i in range(base)]
 		tick_labels = copy.copy(ticks)
-		ticks.append(timeout_ratio)
+		ticks.append(remapped_timeout_ratio)
 		tick_labels.append(R'\ding{99}')
-		if max_ratio >= imbalanced_ratio:
-			ticks.append(imbalanced_ratio)
+		if show_imbalanced_tick:
+			ticks.append(remapped_imbalanced_ratio)
 			tick_labels.append(R'\ding{56}')
 		axes[nbuckets - 1].set_xticks(ticks)
 		axes[nbuckets - 1].set_xticklabels(tick_labels)
