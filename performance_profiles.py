@@ -29,9 +29,10 @@ plt.rcParams['text.latex.preamble'] = R'\usepackage{pifont}'
 plt.rcParams['pgf.preamble'] = R'\usepackage{pifont}'
 
 # Returns for each algorithm the tau's at which the number of instances solved within tau*best jumps
-def performance_profiles(algos, instances, input_df, plotname, instance_grouper = ["graph", "k", "epsilon"], objective="km1"):
+def performance_profiles(algos, instances, input_df, plotname="nothing", objective="km1"):
 	df = input_df[input_df.algorithm.isin(algos)].copy()
 
+	instance_grouper = ["graph", "k", "epsilon"]
 	in_time = df[(df.timeout == 'no') & (df.totalPartitionTime < time_limit)]
 	balanced = in_time[(in_time.imbalance <= in_time.epsilon) & (in_time.failed == "no")].copy()
 	in_time_index = in_time.groupby(instance_grouper + ["algorithm"]).mean()
@@ -111,26 +112,17 @@ def performance_profiles(algos, instances, input_df, plotname, instance_grouper 
 		#output.append((algo, len(ratios[algo]) * performance_profile_fraction_scaling / n, last_ratio))
 		output.append((algo, len(ratios[algo]) * performance_profile_fraction_scaling / n, last_drawn_ratio))	# draw the step function to the rightmost x-value
 
-		# interesting_ratios = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8, 2]
-		# for ir in interesting_ratios:
-		# 	total = next((i for i, x in enumerate(ratios[algo]) if x > ir), n)
-		# 	print(algo, ir, total, total / n)
-		
-		# for cat, ir in zip(["timeout", "imbalanced"], [timeout_ratio, imbalanced_ratio]):
-		# 	c = ratios[algo].count(ir)
-		# 	print(algo, cat, c, c/n)
 
 	output_df = pd.DataFrame(data=output, columns=["algorithm", "fraction", "ratio"])
-	output_df.to_csv(plotname + "_performance_profile.csv", index=False)
 	return output_df
 
 
-def plot(plotname, colors, display_legend="Yes", title=None, grid=True, width_scale=1.0):
-	df = pd.read_csv(plotname + "_performance_profile.csv")
+def plot(plotname, df, colors, display_legend="Yes", title=None, grid=True, width_scale=1.0):
 	algos = df.algorithm.unique()
 	
 	max_ratio = df.ratio.max()
-	last_drawn_ratio = min(imbalanced_ratio, max_ratio)
+	last_drawn_ratio = min(imbalanced_ratio, max_ratio)		# TODO fix this. should be just max_ratio + some tiny buffer
+	#last_drawn_ratio = 50
 	bb = [0.995, 1.1, 2, last_drawn_ratio * 1.05]
 	ymax = 1.01 * performance_profile_fraction_scaling
 
@@ -165,8 +157,7 @@ def plot(plotname, colors, display_legend="Yes", title=None, grid=True, width_sc
 	for algo in algos:
 		algo_df = df[df.algorithm == algo]
 		for i, ax in enumerate(axes):
-			#ax.plot(algo_df["ratio"], algo_df["fraction"], color=colors[algo], lw=2.2, label=algo)
-			ax.step(algo_df["ratio"], algo_df["fraction"], color=colors[algo], lw=2.2, label=algo)
+			ax.plot(algo_df["ratio"], algo_df["fraction"], color=colors[algo], lw=2.2, label=algo)
 			
 	if display_legend == "Yes":
 		if len(algos) < 5:
@@ -200,12 +191,13 @@ def plot(plotname, colors, display_legend="Yes", title=None, grid=True, width_sc
 			axes[1].set_xticklabels(x1)
 		else:
 			axes[0].set_xticks([1, 1.05, 1.1])
-			axes[1].set_xticks([1.5])
+			axes[1].set_xticks([1.5, 2.0])
 
-	if max_ratio >= timeout_ratio:
-		#axes[nbuckets - 1].set_xscale('fifthroot')
+
+	if max_ratio >= 900:
 		axes[nbuckets - 1].set_xscale('log')
-
+		#axes[nbuckets - 1].set_xscale('fifthroot')
+	if max_ratio >= timeout_ratio:			#  TODO fix this by letting the other function return which cases we need
 		ticks = [bb[nbuckets-1], 10, 100]
 		tick_labels = copy.copy(ticks)
 		ticks.append(timeout_ratio)
