@@ -9,6 +9,7 @@ import scales
 
 import scipy.stats
 import math
+import numpy as np
 
 #import tikzplotlib
 
@@ -78,9 +79,6 @@ def performance_profiles(algos, instances, input_df, plotname="nothing", objecti
 			ratios[algo].append(r)
 
 	print(len(unsolved), "instances unsolved")
-	print(algos)
-	for algo in algos:
-		print(algo, len(ratios[algo]))
 	max_ratio = max( max(ratios[algo]) for algo in algos )
 	print("max ratio = ", max_ratio)
 	for algo in algos:
@@ -206,6 +204,9 @@ def plot(plotname, df, colors, display_legend="Yes", title=None, grid=True, widt
 			tick_labels.append(R'\ding{56}')
 		axes[nbuckets - 1].set_xticks(ticks)
 		axes[nbuckets - 1].set_xticklabels(tick_labels)
+	
+	if nbuckets == 3 and 2.5 in axes[2].get_xticks():
+		axes[2].set_xticks(np.arange(4.0, last_drawn_ratio, step=2.0))
 
 	axes[0].set_ylabel('Fraction of instances')
 	axes[nbuckets//2].set_xlabel('Performance ratio')

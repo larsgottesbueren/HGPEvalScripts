@@ -39,11 +39,11 @@ def plot(plotname, df, baseline_algorithm, colors, field='totalPartitionTime'):
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_colwidth', None)
 
-    #slower = df[(df.relative_time > 1.35)]
+    #slower = df[(df.relative_time > 1.1)]
     #print("slower\n", slower[["algorithm","graph", "k", "relative_time", field]])
 
-    #faster = df[(df[field] > 0) & (df.relative_time < 0.1)]
-    #print("faster\n", faster[["graph", "k", "relative_time", field]])
+    #faster = df[(df[field] > 0) & (df.relative_time < 0.9)]
+    #print("faster\n", faster[["algorithm","graph", "k", "relative_time", field]])
     #exit()
 
     w = 5.53248027778
