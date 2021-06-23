@@ -4,10 +4,6 @@ import seaborn as sb
 import matplotlib.pyplot as plt
 import scipy.stats.mstats
 
-plt.rc('text', usetex=True)
-plt.rc('font', family='serif')
-plt.rc('font', size=11.5)
-
 def plot(df, colors, algo_order, plot_name=''):
 	fig, ax = plt.subplots(figsize=(7,3.5))
 	boxprops = dict(fill=False,edgecolor='black', linewidth=0.9, zorder=2)

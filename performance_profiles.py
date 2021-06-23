@@ -21,14 +21,6 @@ timeout_ratio = max_objective-3
 
 performance_profile_fraction_scaling = 1
 
-plt.rc('text', usetex=True)
-plt.rc('font', family='serif')
-plt.rc('pgf', rcfonts=False)
-plt.rc('font', size=13)
-
-plt.rcParams['text.latex.preamble'] = R'\usepackage{pifont}'
-plt.rcParams['pgf.preamble'] = R'\usepackage{pifont}'
-
 # Returns for each algorithm the tau's at which the number of instances solved within tau*best jumps
 def performance_profiles(algos, instances, input_df, plotname="nothing", objective="km1"):
 	df = input_df[input_df.algorithm.isin(algos)].copy()
@@ -77,8 +69,9 @@ def performance_profiles(algos, instances, input_df, plotname="nothing", objecti
 			else:
 				r = timeout_ratio
 			ratios[algo].append(r)
+			#if r > 1.1:
+			#	print(algo, G, k, r)
 
-	print(len(unsolved), "instances unsolved")
 	max_ratio = max( max(ratios[algo]) for algo in algos )
 	print("max ratio = ", max_ratio)
 	for algo in algos:
@@ -101,7 +94,8 @@ def performance_profiles(algos, instances, input_df, plotname="nothing", objecti
 	return output_df
 
 
-def plot(plotname, df, colors, display_legend="Yes", title=None, grid=True, width_scale=1.0):
+def plot(plotname, df, colors, display_legend="Yes", title=None, 
+         grid=True, width_scale=1.0, figsize=None, legend_fontsize=10):
 	algos = df.algorithm.unique()
 	
 	max_ratio = df.ratio.max()
@@ -133,22 +127,10 @@ def plot(plotname, df, colors, display_legend="Yes", title=None, grid=True, widt
 		print("Warning nbuckets = 0. Aborting")
 		return
 
-	linewidth = 5.53248027778
-
-
-	#w = default_plotwidth * width_scale
-	golden_ratio = 1.61803398875
-	#h = default_plotwidth / golden_ratio
-
-	w = linewidth * width_scale
-	h = 3.406
-
-	fig = plt.figure(figsize=(w,h))	# this is full line width (+ golden ratio). for pgf we do half, but might have to set ticks manually; also font size?
+	fig = plt.figure(figsize=figsize)
 	gs = grd.GridSpec(nrows=1, ncols=nbuckets, wspace=0.0, hspace=0.0, width_ratios=[1.0/ nbuckets for i in range(nbuckets)])
 	axes = [plt.subplot(gs[i]) for i in range(nbuckets)]
-	for ax in axes[1:]:
-		ax.set_yticklabels(ax.get_yticklabels(), visible=False)
-		ax.yaxis.set_ticks_position('none')
+
 	
 
 	for algo in algos:
@@ -157,19 +139,20 @@ def plot(plotname, df, colors, display_legend="Yes", title=None, grid=True, widt
 			ax.plot(algo_df["ratio"], algo_df["fraction"], color=colors[algo], lw=2.2, label=algo)
 			
 	if display_legend == "Yes":
-		if len(algos) < 5:
-			plt.legend(ncol=1, fancybox=True, framealpha=1.0, loc='lower right')
-		else:
-			if width_scale > 1.0:
-				ncols = 5
-			else:
-				ncols = 2
-			axes[0].legend(ncol=ncols, fancybox=False, frameon=False, loc='upper left', bbox_to_anchor=(-0.12,-0.15))
-	elif display_legend != "No":
-		fig_leg = plt.figure(figsize=(w,h))
+		ncol = 1
+		axes[-1].legend(fancybox=True, framealpha=1.0, fontsize=legend_fontsize, ncol=ncol)
+		#if len(algos) < 5:
+		#	plt.legend(ncol=1, fancybox=True, framealpha=1.0, loc='lower right')
+		#else:
+		#	if width_scale > 1.0:
+		#		ncols = 5
+		#	else:
+		#		ncols = 2
+		#	axes[0].legend(ncol=ncols, fancybox=False, frameon=False, loc='upper left', bbox_to_anchor=(-0.12,-0.15))
+	elif display_legend == "Externalize":
+		fig_leg = plt.figure()
 		fig_leg.legend(*axes[0].get_legend_handles_labels(), loc='center', ncol=2, fancybox=True, framealpha=1.0)
 		fig_leg.savefig(display_legend + ".pdf", bbox_inches="tight")
-		fig_leg.savefig(display_legend + ".pgf", bbox_inches="tight")
 		plt.close(fig_leg)
 
 	for i in range(nbuckets):
@@ -208,8 +191,19 @@ def plot(plotname, df, colors, display_legend="Yes", title=None, grid=True, widt
 	if nbuckets == 3 and 2.5 in axes[2].get_xticks():
 		axes[2].set_xticks(np.arange(4.0, last_drawn_ratio, step=2.0))
 
-	axes[0].set_ylabel('Fraction of instances')
-	axes[nbuckets//2].set_xlabel('Performance ratio')
+
+	axes[0].set_ylabel('fraction of instances')
+	for ax in axes:			# generate the ticks for each bucket, so that the grid looks good!
+		ax.set_yticks([0.0, 0.25, 0.5, 0.75, 1.0])
+	for ax in axes[1:]:
+		ax.set_yticklabels(ax.get_yticklabels(), visible=False)
+		ax.yaxis.set_ticks_position('none')
+	if nbuckets == 2:
+		axes[0].set_xlabel('performance ratio', x=1.05)
+	elif nbuckets == 3:
+		axes[1].set_xlabel('performance ratio')
+	else:
+		axes[0].set_xlabel('performance ratio')
 
 	if title != None:
 		axes[nbuckets-1].text(0.5, 0.2, title, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, bbox=dict(facecolor='white'))

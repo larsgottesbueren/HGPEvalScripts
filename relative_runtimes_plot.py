@@ -4,22 +4,20 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as grd
 import numpy as np
 import commons
-
-plt.rc('text', usetex=True)
-plt.rc('font', family='serif')
-plt.rc('pgf', rcfonts=False)
-plt.rc('font', size=13)
-plt.rcParams['text.latex.preamble'] = R'\usepackage{pifont}'
-plt.rcParams['pgf.preamble'] = R'\usepackage{pifont}'
+import scipy.stats
 
 time_limit = 28800  # adapt later
 
-def plot(plotname, df, baseline_algorithm, colors, field='totalPartitionTime'):
+def plot(plotname, df, baseline_algorithm, colors, figsize=None, field='totalPartitionTime'):
     n_instances = len(commons.infer_instances_from_dataframe(df))
     algos = commons.infer_algorithms_from_dataframe(df)
 
     keys = ["graph", "k", "epsilon"]
     df = df.groupby(keys + ["algorithm"]).mean()[field].reset_index()   # arithmetic mean over seeds per instance
+
+    for algo in algos:
+        print(algo, "gmean time", scipy.stats.gmean(df[df.algorithm == algo][field]))
+
     baseline_df = df[df.algorithm == baseline_algorithm].copy()
     baseline_df.set_index(keys, inplace=True)
     df = df[df.algorithm != baseline_algorithm].copy()
@@ -48,7 +46,7 @@ def plot(plotname, df, baseline_algorithm, colors, field='totalPartitionTime'):
 
     w = 5.53248027778
     h = 3.406
-    fig, ax = plt.subplots()    #figsize=(7,3.5)) # adapt to paper margins
+    fig, ax = plt.subplots(figsize=figsize)    #figsize=(7,3.5)) # adapt to paper margins
 
     algos.remove(baseline_algorithm)
     
