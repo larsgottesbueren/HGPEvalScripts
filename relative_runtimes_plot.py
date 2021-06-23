@@ -44,8 +44,6 @@ def plot(plotname, df, baseline_algorithm, colors, figsize=None, field='totalPar
     #print("faster\n", faster[["algorithm","graph", "k", "relative_time", field]])
     #exit()
 
-    w = 5.53248027778
-    h = 3.406
     fig, ax = plt.subplots(figsize=figsize)    #figsize=(7,3.5)) # adapt to paper margins
 
     algos.remove(baseline_algorithm)
@@ -57,17 +55,26 @@ def plot(plotname, df, baseline_algorithm, colors, figsize=None, field='totalPar
 
 
     #ax.set_yscale('log', base=2)
-    ax.set_ylabel('relative slowdown to ' + baseline_algorithm)
+    ax.set_ylabel('slowdown rel. to ' + baseline_algorithm)
     ax.set_xlabel('instances')
     ax.grid(axis='y', which='both', ls='dashed')
+    ax.set_yscale('log')
 
 
     step = 500
+    if n_instances < 50:
+        step = 10
+    elif n_instances < 100:
+        step = 20
+    elif n_instances <= 200:
+        step = 50
+    elif n_instances <= 800:
+        step = 100
     custom_ticks = list(range(0, n_instances, step))
     if n_instances % step != 0:
         custom_ticks.append(n_instances)
 
-    #plt.xticks(custom_ticks)
+    plt.xticks(custom_ticks)
     
     fig.savefig(plotname + "_relative_slowdown.pdf", bbox_inches='tight')
     #fig.savefig(plotname + ".pdf", bbox_inches='tight')

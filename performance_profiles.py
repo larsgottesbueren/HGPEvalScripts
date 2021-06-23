@@ -139,8 +139,7 @@ def plot(plotname, df, colors, display_legend="Yes", title=None,
 			ax.plot(algo_df["ratio"], algo_df["fraction"], color=colors[algo], lw=2.2, label=algo)
 			
 	if display_legend == "Yes":
-		ncol = 1
-		axes[-1].legend(fancybox=True, framealpha=1.0, fontsize=legend_fontsize, ncol=ncol)
+		axes[-1].legend(fancybox=True, framealpha=1.0, fontsize=legend_fontsize)
 		#if len(algos) < 5:
 		#	plt.legend(ncol=1, fancybox=True, framealpha=1.0, loc='lower right')
 		#else:
@@ -154,6 +153,13 @@ def plot(plotname, df, colors, display_legend="Yes", title=None,
 		fig_leg.legend(*axes[0].get_legend_handles_labels(), loc='center', ncol=2, fancybox=True, framealpha=1.0)
 		fig_leg.savefig(display_legend + ".pdf", bbox_inches="tight")
 		plt.close(fig_leg)
+	elif display_legend == "wide":
+		handles, labels = axes[0].get_legend_handles_labels()
+		fig.legend(handles, labels, loc=(0.3, 0.3), fancybox=True, framealpha=1.0)
+	elif display_legend == "lower right":
+		handles, labels = axes[0].get_legend_handles_labels()
+		fig.legend(handles, labels, loc=(0.55, 0.2), fancybox=True, framealpha=0.8)
+		# axes[1].legend(fancybox=True, framealpha=1.0, fontsize=legend_fontsize)
 
 	for i in range(nbuckets):
 		axes[i].set_xlim(bb[i], bb[i+1])
@@ -171,7 +177,10 @@ def plot(plotname, df, colors, display_legend="Yes", title=None,
 			axes[1].set_xticklabels(x1)
 		else:
 			axes[0].set_xticks([1, 1.05, 1.1])
-			axes[1].set_xticks([1.5, 2.0])
+			ax1_xticks = [1.5, 2.0]
+			if nbuckets == 3 and 2 in axes[2].get_xticks():
+				ax1_xticks.remove(2.0)
+			axes[1].set_xticks(ax1_xticks)
 
 	
 	if last_drawn_ratio >= 500 or show_timeout_tick:
