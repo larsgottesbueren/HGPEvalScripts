@@ -31,7 +31,7 @@ def compute_windowed_gmeans(speedups):
     speedups.sort_values(by=["threads","sequential_time"], inplace=True)
     # take rolling window of size 30, min window size is 1, start new calculation for each thread-count
     # then only take the speedup column, and apply geometric mean to each window
-    speedups["rolling_gmean_speedup"] = speedups.rolling(window=30, min_periods=1, on="threads")["speedup"].apply(scipy.stats.gmean)
+    speedups["rolling_gmean_speedup"] = speedups.groupby('threads')["speedup"].transform(lambda x : x.rolling(window=30, min_periods=1).apply(scipy.stats.gmean))
 
 def scalability_plot(df, algorithm, field, ax, thread_colors=None, 
                      show_scatter=True, show_rolling_gmean=True, 
@@ -50,9 +50,11 @@ def scalability_plot(df, algorithm, field, ax, thread_colors=None,
         thread_colors = commons.construct_new_color_mapping(thread_list)
 
     if show_scatter:
-        sb.scatterplot(ax=ax, x="sequential_time", y="speedup", hue="threads", data=speedups, palette=thread_colors,legend=True, edgecolor="gray", alpha=0.6, s=12)
+        sb.scatterplot(ax=ax, x="sequential_time", y="speedup", hue="threads", data=speedups, palette=thread_colors,legend=True, edgecolor="gray", alpha=0.2, s=12)
     if show_rolling_gmean:
-        sb.lineplot(ax=ax, x='sequential_time', y='rolling_gmean_speedup', data=speedups, hue='threads', palette=thread_colors, linewidth=2.4, legend=(not show_scatter))
+        for th, co in thread_colors.items():
+            th_df = speedups[speedups.threads == th]
+            ax.plot(th_df['sequential_time'], th_df['rolling_gmean_speedup'], color=co, linewidth=2.2, label=(th if not show_scatter else None))
     
     if display_labels:
         ax.set_ylabel('(rolling gmean) speedup')    
