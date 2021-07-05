@@ -8,11 +8,7 @@ import scipy.stats
 
 time_limit = 28800  # adapt later
 
-def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, ylabel_fontsize=None, field='totalPartitionTime'):
-    n_instances = len(commons.infer_instances_from_dataframe(df))
-    if algos == None:
-        algos = commons.infer_algorithms_from_dataframe(df)
-
+def compute_relative_runtimes(df, algos, baseline_algorithm, field):
     keys = ["graph", "k", "epsilon"]
     df = df.groupby(keys + ["algorithm"]).mean()[field].reset_index()   # arithmetic mean over seeds per instance
 
@@ -32,29 +28,35 @@ def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, yla
     
     df["relative_time"] = df.apply(relative_time, axis='columns')
     df.sort_values(by=["relative_time"], inplace=True)
+    return df    
 
-   # print(field)
+def get_stats(df, baseline_algorithm, algos, field="totalPartitionTime"):
+    df = compute_relative_runtimes(df, algos, baseline_algorithm, field)
+    my_algos = algos.copy()
+    print(my_algos, baseline_algorithm)
+    my_algos.remove(baseline_algorithm)
+    for algo in my_algos:
+        print(algo)
+        print("faster than baseline on", df[df.relative_time < 1.0])
+        print("max", df.relative_time.max())
+        print("min", df.relative_time.min())
 
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_colwidth', None)
 
-    #slower = df[(df.relative_time > 1.1)]
-    #print("slower\n", slower[["algorithm","graph", "k", "relative_time", field]])
 
-    #faster = df[(df[field] > 0) & (df.relative_time < 0.9)]
-    #print("faster\n", faster[["algorithm","graph", "k", "relative_time", field]])
-    #exit()
+
+def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, ylabel_fontsize=None, field='totalPartitionTime'):
+    n_instances = len(commons.infer_instances_from_dataframe(df))
+    if algos == None:
+        algos = commons.infer_algorithms_from_dataframe(df)
+
+    df = compute_relative_runtimes(df, algos, baseline_algorithm, field)
 
     fig, ax = plt.subplots(figsize=figsize)    #figsize=(7,3.5)) # adapt to paper margins
-
     algos.remove(baseline_algorithm)
-    
     for algo in algos:
         algo_df = df[df.algorithm == algo]
-        print(algo, "slower than baseline on", len(algo_df[algo_df.relative_time > 1.0]), "instances")
         n_instances_solved_by_algo = len(algo_df)
         sb.lineplot(y=algo_df["relative_time"], x=range(n_instances_solved_by_algo), label=algo, color=colors[algo], ax=ax)
-
 
     #ax.set_yscale('log', base=2)
     if ylabel_fontsize == None:
@@ -64,7 +66,6 @@ def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, yla
     ax.set_xlabel('instances')
     ax.grid(axis='y', which='both', ls='dashed')
     ax.set_yscale('log')
-
 
     step = 500
     if n_instances < 50:
