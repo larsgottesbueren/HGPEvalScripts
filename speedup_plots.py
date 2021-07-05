@@ -11,8 +11,8 @@ import commons
 def compute_speedups(df, field):
     lookup_keys = ["graph", "k"]
     if "seed" in df.columns:
-        #lookup_keys.append("seed")
-        df = df.groupby(["graph","k","threads"]).mean()[field].reset_index()
+        lookup_keys.append("seed")
+        # df = df.groupby(["graph","k","threads"]).mean()[field].reset_index()
 
     seq_df = df[df["threads"] == 1].copy()
     seq_df.set_index(lookup_keys, inplace=True)
@@ -31,7 +31,26 @@ def compute_windowed_gmeans(speedups):
     speedups.sort_values(by=["threads","sequential_time"], inplace=True)
     # take rolling window of size 30, min window size is 1, start new calculation for each thread-count
     # then only take the speedup column, and apply geometric mean to each window
-    speedups["rolling_gmean_speedup"] = speedups.groupby('threads')["speedup"].transform(lambda x : x.rolling(window=30, min_periods=1).apply(scipy.stats.gmean))
+    speedups["rolling_gmean_speedup"] = speedups.groupby('threads')["speedup"].transform(lambda x : x.rolling(window=50, min_periods=5).apply(scipy.stats.gmean))
+
+def print_speedups(df, field):
+    speedups = compute_speedups(df, field)
+    compute_windowed_gmeans(speedups)
+    thread_list = list(df.threads.unique())
+    if 1 in thread_list:
+        thread_list.remove(1)
+
+    print(thread_list)
+    print("gmean speedups")
+    for th in thread_list:
+        thdf = speedups[speedups.threads == th]
+        print(scipy.stats.gmean(thdf.speedup))
+    print("max speedups")
+    for th in thread_list:
+        thdf = speedups[speedups.threads == th]
+        print(thdf.speedup.max())
+    print("> 64")
+    print(speedups[speedups.speedup > 64])
 
 def scalability_plot(df, algorithm, field, ax, thread_colors=None, 
                      show_scatter=True, show_rolling_gmean=True, 
@@ -50,11 +69,11 @@ def scalability_plot(df, algorithm, field, ax, thread_colors=None,
         thread_colors = commons.construct_new_color_mapping(thread_list)
 
     if show_scatter:
-        sb.scatterplot(ax=ax, x="sequential_time", y="speedup", hue="threads", data=speedups, palette=thread_colors,legend=True, edgecolor="gray", alpha=0.2, s=12)
+        sb.scatterplot(ax=ax, x="sequential_time", y="speedup", hue="threads", data=speedups[speedups.threads != 128], palette=thread_colors,legend=(not show_rolling_gmean), edgecolor="gray", alpha=0.2, s=8)
     if show_rolling_gmean:
         for th, co in thread_colors.items():
             th_df = speedups[speedups.threads == th]
-            ax.plot(th_df['sequential_time'], th_df['rolling_gmean_speedup'], color=co, linewidth=2.2, label=(th if not show_scatter else None))
+            ax.plot(th_df['sequential_time'], th_df['rolling_gmean_speedup'], color=co, linewidth=1.8, label=th)
     
     if display_labels:
         ax.set_ylabel('(rolling gmean) speedup')    

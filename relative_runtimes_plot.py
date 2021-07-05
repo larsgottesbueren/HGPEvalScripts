@@ -8,9 +8,10 @@ import scipy.stats
 
 time_limit = 28800  # adapt later
 
-def plot(plotname, df, baseline_algorithm, colors, figsize=None, field='totalPartitionTime'):
+def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, ylabel_fontsize=None, field='totalPartitionTime'):
     n_instances = len(commons.infer_instances_from_dataframe(df))
-    algos = commons.infer_algorithms_from_dataframe(df)
+    if algos == None:
+        algos = commons.infer_algorithms_from_dataframe(df)
 
     keys = ["graph", "k", "epsilon"]
     df = df.groupby(keys + ["algorithm"]).mean()[field].reset_index()   # arithmetic mean over seeds per instance
@@ -50,12 +51,16 @@ def plot(plotname, df, baseline_algorithm, colors, figsize=None, field='totalPar
     
     for algo in algos:
         algo_df = df[df.algorithm == algo]
+        print(algo, "slower than baseline on", len(algo_df[algo_df.relative_time > 1.0]), "instances")
         n_instances_solved_by_algo = len(algo_df)
         sb.lineplot(y=algo_df["relative_time"], x=range(n_instances_solved_by_algo), label=algo, color=colors[algo], ax=ax)
 
 
     #ax.set_yscale('log', base=2)
-    ax.set_ylabel('slowdown rel. to ' + baseline_algorithm)
+    if ylabel_fontsize == None:
+        ax.set_ylabel('slowdown rel. to ' + baseline_algorithm)
+    else:
+        ax.set_ylabel('slowdown rel. to ' + baseline_algorithm, fontsize=ylabel_fontsize)
     ax.set_xlabel('instances')
     ax.grid(axis='y', which='both', ls='dashed')
     ax.set_yscale('log')

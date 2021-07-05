@@ -67,6 +67,7 @@ def performance_profiles(algos, instances, input_df, plotname="nothing", objecti
 						else:
 							r = obj + 1
 			else:
+				print("timeout", G,k,algo)
 				r = timeout_ratio
 			ratios[algo].append(r)
 			#if r > 1.1:
@@ -82,6 +83,8 @@ def performance_profiles(algos, instances, input_df, plotname="nothing", objecti
 	output = []
 	for algo in algos:
 		ratios[algo].sort()
+		num_best = sum(map(lambda ratio : 1 if ratio == 1 else 0, ratios[algo]))
+		print(algo, num_best)
 		for i, (r_prev, r) in enumerate(zip(ratios[algo], ratios[algo][1:])):
 			if r_prev != r:
 				output.append((algo, i * performance_profile_fraction_scaling / n, r_prev))		# last occurence of r_prev
@@ -109,7 +112,7 @@ def plot(plotname, df, colors, display_legend="Yes", title=None,
 	remapped_timeout_ratio = 10 ** base
 	remapped_imbalanced_ratio = 10 ** (base + 1)
 	if show_timeout_tick:
-		print("do remap")
+		print("do remap. new timeout ratio", remapped_timeout_ratio)
 		df.ratio.replace(to_replace={timeout_ratio : remapped_timeout_ratio, imbalanced_ratio : remapped_imbalanced_ratio}, inplace=True)
 	
 
@@ -181,13 +184,14 @@ def plot(plotname, df, colors, display_legend="Yes", title=None,
 			if nbuckets == 3 and 2 in axes[2].get_xticks():
 				ax1_xticks.remove(2.0)
 			axes[1].set_xticks(ax1_xticks)
+			axes[1].set_xticklabels(ax1_xticks)
 
 	
 	if last_drawn_ratio >= 500 or show_timeout_tick:
 		axes[nbuckets - 1].set_xscale('log')
 		#axes[nbuckets - 1].set_xscale('fifthroot')
 	if show_timeout_tick:
-		ticks = [10 ** i for i in range(base)]
+		ticks = [10 ** i for i in range(1, base)]
 		tick_labels = copy.copy(ticks)
 		ticks.append(remapped_timeout_ratio)
 		tick_labels.append(R'\ding{99}')
