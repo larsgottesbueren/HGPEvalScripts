@@ -28,7 +28,7 @@ def compute_relative_runtimes(df, algos, baseline_algorithm, field):
     
     df["relative_time"] = df.apply(relative_time, axis='columns')
     df.sort_values(by=["relative_time"], inplace=True)
-    return df    
+    return df
 
 def get_stats(df, baseline_algorithm, algos, field="totalPartitionTime"):
     df = compute_relative_runtimes(df, algos, baseline_algorithm, field)
@@ -61,6 +61,8 @@ def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, yla
     #ax.set_yscale('log', base=2)
     if ylabel_fontsize == None:
         ax.set_ylabel('slowdown rel. to ' + baseline_algorithm)
+    elif ylabel_fontsize == "DropAlgo":
+        ax.set_ylabel('relative slowdown')
     else:
         ax.set_ylabel('slowdown rel. to ' + baseline_algorithm, fontsize=ylabel_fontsize)
     ax.set_xlabel('instances')

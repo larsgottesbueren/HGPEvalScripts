@@ -8,11 +8,17 @@ import scipy.stats
 
 import commons
 
-def compute_speedups(df, field):
-    lookup_keys = ["graph", "k"]
+def compute_speedups(df, field, seed_aggregator):
+    lookup_keys = ["graph"]
+    if "k" in df.columns:
+        lookup_keys.append("k")
     if "seed" in df.columns:
-        lookup_keys.append("seed")
-        # df = df.groupby(["graph","k","threads"]).mean()[field].reset_index()
+        if seed_aggregator == None:
+            lookup_keys.append("seed")
+        elif seed_aggregator == "median":
+            df = df.groupby(lookup_keys + ["threads"]).median()[field].reset_index()
+        elif seed_aggregator == "mean":
+            df = df.groupby(lookup_keys + ["threads"]).mean()[field].reset_index()
 
     seq_df = df[df["threads"] == 1].copy()
     seq_df.set_index(lookup_keys, inplace=True)
@@ -54,11 +60,12 @@ def print_speedups(df, field):
 
 def scalability_plot(df, algorithm, field, ax, thread_colors=None, 
                      show_scatter=True, show_rolling_gmean=True, 
-                     display_labels=True,
-                     xscale=None, yscale=None):
+                     display_labels=True, display_legend=True,
+                     xscale=None, yscale=None, alpha=0.2,
+                     seed_aggregator=None):
     
     
-    speedups = compute_speedups(df[df.algorithm == algorithm], field)
+    speedups = compute_speedups(df[df.algorithm == algorithm], field, seed_aggregator)
     compute_windowed_gmeans(speedups)
     
     if thread_colors == None:
@@ -69,7 +76,7 @@ def scalability_plot(df, algorithm, field, ax, thread_colors=None,
         thread_colors = commons.construct_new_color_mapping(thread_list)
 
     if show_scatter:
-        sb.scatterplot(ax=ax, x="sequential_time", y="speedup", hue="threads", data=speedups[speedups.threads != 128], palette=thread_colors,legend=(not show_rolling_gmean), edgecolor="gray", alpha=0.2, s=8)
+        sb.scatterplot(ax=ax, x="sequential_time", y="speedup", hue="threads", data=speedups, palette=thread_colors,legend=display_legend, edgecolor="gray", alpha=alpha, s=8)
     if show_rolling_gmean:
         for th, co in thread_colors.items():
             th_df = speedups[speedups.threads == th]

@@ -163,6 +163,9 @@ def plot(plotname, df, colors, display_legend="Yes", title=None,
 		handles, labels = axes[0].get_legend_handles_labels()
 		fig.legend(handles, labels, loc=(0.55, 0.2), fancybox=True, framealpha=0.8)
 		# axes[1].legend(fancybox=True, framealpha=1.0, fontsize=legend_fontsize)
+	elif display_legend == "below":
+		ncols = 2
+		axes[0].legend(ncol=ncols, fancybox=False, frameon=False, loc='upper left', bbox_to_anchor=(-0.12,-0.19))
 
 	for i in range(nbuckets):
 		axes[i].set_xlim(bb[i], bb[i+1])
