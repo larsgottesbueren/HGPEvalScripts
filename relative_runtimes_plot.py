@@ -8,9 +8,13 @@ import scipy.stats
 
 time_limit = 28800  # adapt later
 
-def compute_relative_runtimes(df, algos, baseline_algorithm, field):
-    keys = ["graph", "k", "epsilon"]
-    df = df.groupby(keys + ["algorithm"]).mean()[field].reset_index()   # arithmetic mean over seeds per instance
+def compute_relative_runtimes(df, algos, baseline_algorithm, field, seed_aggregator):
+    keys =["graph", "k", "epsilon"]
+
+    if seed_aggregator == "mean":
+        df = df.groupby(keys + ["algorithm"]).mean()[field].reset_index()   # arithmetic mean over seeds per instance
+    elif seed_aggregator == "median":
+        df = df.groupby(keys + ["algorithm"]).median()[field].reset_index()
 
     for algo in algos:
         print(algo, "gmean time", scipy.stats.gmean(df[df.algorithm == algo][field]))
@@ -44,12 +48,12 @@ def get_stats(df, baseline_algorithm, algos, field="totalPartitionTime"):
 
 
 
-def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, ylabel_fontsize=None, field='totalPartitionTime'):
+def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, ylabel_fontsize=None, seed_aggregator="mean", field='totalPartitionTime'):
     n_instances = len(commons.infer_instances_from_dataframe(df))
     if algos == None:
         algos = commons.infer_algorithms_from_dataframe(df)
 
-    df = compute_relative_runtimes(df, algos, baseline_algorithm, field)
+    df = compute_relative_runtimes(df, algos, baseline_algorithm, field, seed_aggregator)
 
     fig, ax = plt.subplots(figsize=figsize)    #figsize=(7,3.5)) # adapt to paper margins
     algos.remove(baseline_algorithm)

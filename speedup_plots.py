@@ -33,11 +33,11 @@ def compute_speedups(df, field, seed_aggregator):
     return speedups
 
 
-def compute_windowed_gmeans(speedups):
+def compute_windowed_gmeans(speedups, window_size):
     speedups.sort_values(by=["threads","sequential_time"], inplace=True)
     # take rolling window of size 30, min window size is 1, start new calculation for each thread-count
     # then only take the speedup column, and apply geometric mean to each window
-    speedups["rolling_gmean_speedup"] = speedups.groupby('threads')["speedup"].transform(lambda x : x.rolling(window=50, min_periods=5).apply(scipy.stats.gmean))
+    speedups["rolling_gmean_speedup"] = speedups.groupby('threads')["speedup"].transform(lambda x : x.rolling(window=window_size, min_periods=5).apply(scipy.stats.gmean))
 
 def print_speedups(df, field):
     speedups = compute_speedups(df, field)
@@ -58,15 +58,15 @@ def print_speedups(df, field):
     print("> 64")
     print(speedups[speedups.speedup > 64])
 
-def scalability_plot(df, algorithm, field, ax, thread_colors=None, 
+def scalability_plot(df, field, ax, thread_colors=None, 
                      show_scatter=True, show_rolling_gmean=True, 
                      display_labels=True, display_legend=True,
                      xscale=None, yscale=None, alpha=0.2,
-                     seed_aggregator=None):
+                     seed_aggregator=None, window_size=50):
     
     
-    speedups = compute_speedups(df[df.algorithm == algorithm], field, seed_aggregator)
-    compute_windowed_gmeans(speedups)
+    speedups = compute_speedups(df, field, seed_aggregator)
+    compute_windowed_gmeans(speedups, window_size)
     
     if thread_colors == None:
         thread_list = list(df.threads.unique())
