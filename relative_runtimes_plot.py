@@ -45,24 +45,19 @@ def get_stats(df, baseline_algorithm, algos, field="totalPartitionTime"):
         print("max", df.relative_time.max())
         print("min", df.relative_time.min())
 
-
-
-
-def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, ylabel_fontsize=None, seed_aggregator="mean", field='totalPartitionTime'):
+def construct_plot(df, ax, baseline_algorithm, colors, algos=None, ylabel_fontsize=None, seed_aggregator="mean", field='totalPartitionTime'):
     n_instances = len(commons.infer_instances_from_dataframe(df))
     if algos == None:
         algos = commons.infer_algorithms_from_dataframe(df)
 
     df = compute_relative_runtimes(df, algos, baseline_algorithm, field, seed_aggregator)
 
-    fig, ax = plt.subplots(figsize=figsize)    #figsize=(7,3.5)) # adapt to paper margins
     algos.remove(baseline_algorithm)
     for algo in algos:
         algo_df = df[df.algorithm == algo]
         n_instances_solved_by_algo = len(algo_df)
         sb.lineplot(y=algo_df["relative_time"], x=range(n_instances_solved_by_algo), label=algo, color=colors[algo], ax=ax)
 
-    #ax.set_yscale('log', base=2)
     if ylabel_fontsize == None:
         ax.set_ylabel('slowdown rel. to ' + baseline_algorithm)
     elif ylabel_fontsize == "DropAlgo":
@@ -87,10 +82,15 @@ def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, yla
         custom_ticks.append(n_instances)
 
     plt.xticks(custom_ticks)
-    
+
+
+def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, ylabel_fontsize=None, seed_aggregator="mean", field='totalPartitionTime', legend=None):
+    fig, ax = plt.subplots(figsize=figsize)
+    construct_plot(df=df, ax=ax, baseline_algorithm=baseline_algorithm, colors=colors, algos=algos, ylabel_fontsize=ylabel_fontsize, seed_aggregator=seed_aggregator, field=field)
+    if legend == "NoLegend":
+        ax.legend().set_visible(False)
     fig.savefig(plotname + "_relative_slowdown.pdf", bbox_inches='tight')
     #fig.savefig(plotname + ".pdf", bbox_inches='tight')
-
 
 if __name__ == '__main__':
     import sys

@@ -39,24 +39,24 @@ def compute_windowed_gmeans(speedups, window_size):
     # then only take the speedup column, and apply geometric mean to each window
     speedups["rolling_gmean_speedup"] = speedups.groupby('threads')["speedup"].transform(lambda x : x.rolling(window=window_size, min_periods=5).apply(scipy.stats.gmean))
 
-def print_speedups(df, field):
-    speedups = compute_speedups(df, field)
-    compute_windowed_gmeans(speedups)
+def print_speedups(df, field, min_sequential_time = 0, seed_aggregator="median"):
+    speedups = compute_speedups(df, field, seed_aggregator)
     thread_list = list(df.threads.unique())
     if 1 in thread_list:
         thread_list.remove(1)
 
-    print(thread_list)
-    print("gmean speedups")
+    # print(thread_list)
+    thread_list = [64]
+    print("geometric mean speedups")
     for th in thread_list:
-        thdf = speedups[speedups.threads == th]
+        thdf = speedups[(speedups.threads == th) & (speedups.sequential_time >= min_sequential_time)]
         print(scipy.stats.gmean(thdf.speedup))
-    print("max speedups")
+    #print("max speedups")
     for th in thread_list:
         thdf = speedups[speedups.threads == th]
-        print(thdf.speedup.max())
-    print("> 64")
-    print(speedups[speedups.speedup > 64])
+    #    print(thdf.speedup.max())
+    #print("> 64")
+    #print(speedups[speedups.speedup > 64])
 
 def scalability_plot(df, field, ax, thread_colors=None, 
                      show_scatter=True, show_rolling_gmean=True, 
@@ -76,7 +76,7 @@ def scalability_plot(df, field, ax, thread_colors=None,
         thread_colors = commons.construct_new_color_mapping(thread_list)
 
     if show_scatter:
-        sb.scatterplot(ax=ax, x="sequential_time", y="speedup", hue="threads", data=speedups, palette=thread_colors,legend=display_legend, edgecolor="gray", alpha=alpha, s=8)
+        sb.scatterplot(ax=ax, x="sequential_time", y="speedup", hue="threads", data=speedups[speedups.threads < 128], palette=thread_colors,legend=display_legend, edgecolor="gray", alpha=alpha, s=8)
     if show_rolling_gmean:
         for th, co in thread_colors.items():
             th_df = speedups[speedups.threads == th]

@@ -98,7 +98,7 @@ def performance_profiles(algos, instances, input_df, plotname="nothing", objecti
 
 
 def plot(plotname, df, colors, display_legend="Yes", title=None, 
-         grid=True, width_scale=1.0, figsize=None, legend_fontsize=10):
+         grid=True, width_scale=1.0, figsize=None, fontsize=10):
 	algos = df.algorithm.unique()
 	
 	max_ratio = df.ratio.max()
@@ -130,19 +130,31 @@ def plot(plotname, df, colors, display_legend="Yes", title=None,
 		print("Warning nbuckets = 0. Aborting")
 		return
 
-	fig = plt.figure(figsize=figsize)
-	gs = grd.GridSpec(nrows=1, ncols=nbuckets, wspace=0.0, hspace=0.0, width_ratios=[1.0/ nbuckets for i in range(nbuckets)])
-	axes = [plt.subplot(gs[i]) for i in range(nbuckets)]
+	width_ratios = [1.0 / nbuckets for i in range(nbuckets)]
+	if nbuckets == 3:
+		width_ratios = [0.4, 0.3, 0.3]
+	elif nbuckets == 2:
+		width_ratios = [0.65, 0.35]
 
-	
+
+	fig = plt.figure(figsize=figsize)
+	gs = grd.GridSpec(nrows=1, ncols=nbuckets, wspace=0.0, hspace=0.0, width_ratios=width_ratios)
+	axes = [plt.subplot(gs[i]) for i in range(nbuckets)]
 
 	for algo in algos:
 		algo_df = df[df.algorithm == algo]
 		for i, ax in enumerate(axes):
-			ax.plot(algo_df["ratio"], algo_df["fraction"], color=colors[algo], lw=2.2, label=algo)
-			
-	if display_legend == "Yes":
-		axes[-1].legend(fancybox=True, framealpha=1.0, fontsize=legend_fontsize)
+			ax.plot(
+			        algo_df["ratio"], algo_df["fraction"],
+			        color=colors[algo], lw=2.2, label=algo)
+
+	handles, labels = fig.axes[0].get_legend_handles_labels()
+	ncol = 2
+	if width_scale > 1.0:
+		ncol = 3
+	fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.08), frameon=False, ncol=ncol)
+	#if display_legend == "Yes":
+	#	axes[-1].legend(fancybox=True, framealpha=1.0, fontsize=legend_fontsize)
 		#if len(algos) < 5:
 		#	plt.legend(ncol=1, fancybox=True, framealpha=1.0, loc='lower right')
 		#else:
@@ -151,21 +163,21 @@ def plot(plotname, df, colors, display_legend="Yes", title=None,
 		#	else:
 		#		ncols = 2
 		#	axes[0].legend(ncol=ncols, fancybox=False, frameon=False, loc='upper left', bbox_to_anchor=(-0.12,-0.15))
-	elif display_legend == "Externalize":
-		fig_leg = plt.figure()
-		fig_leg.legend(*axes[0].get_legend_handles_labels(), loc='center', ncol=2, fancybox=True, framealpha=1.0)
-		fig_leg.savefig(display_legend + ".pdf", bbox_inches="tight")
-		plt.close(fig_leg)
-	elif display_legend == "wide":
-		handles, labels = axes[0].get_legend_handles_labels()
-		fig.legend(handles, labels, loc=(0.3, 0.3), fancybox=True, framealpha=1.0)
-	elif display_legend == "lower right":
-		handles, labels = axes[0].get_legend_handles_labels()
-		fig.legend(handles, labels, loc=(0.55, 0.2), fancybox=True, framealpha=0.8)
+	#elif display_legend == "Externalize":
+	#	fig_leg = plt.figure()
+	#	fig_leg.legend(*axes[0].get_legend_handles_labels(), loc='center', ncol=5, fancybox=True, framealpha=1.0)
+	#	fig_leg.savefig(display_legend + ".pdf", bbox_inches="tight")
+	#	plt.close(fig_leg)
+	#elif display_legend == "wide":
+	#	handles, labels = axes[0].get_legend_handles_labels()
+	#	fig.legend(handles, labels, loc=(0.3, 0.3), fancybox=True, framealpha=1.0, fontsize=legend_fontsize)
+	#elif display_legend == "lower right":
+	#	handles, labels = axes[0].get_legend_handles_labels()
+	#	fig.legend(handles, labels, loc=(0.55, 0.2), fancybox=True, framealpha=0.8, fontsize=legend_fontsize)
 		# axes[1].legend(fancybox=True, framealpha=1.0, fontsize=legend_fontsize)
-	elif display_legend == "below":
-		ncols = 2
-		axes[0].legend(ncol=ncols, fancybox=False, frameon=False, loc='upper left', bbox_to_anchor=(-0.12,-0.19))
+	#elif display_legend == "below":
+	#	ncols = 2
+	#	axes[0].legend(ncol=ncols, fancybox=False, frameon=False, loc='upper left', bbox_to_anchor=(-0.12,-0.19))
 
 	for i in range(nbuckets):
 		axes[i].set_xlim(bb[i], bb[i+1])
@@ -178,7 +190,7 @@ def plot(plotname, df, colors, display_legend="Yes", title=None,
 			x0 = [1, 1.025, 1.05, 1.075, 1.1]
 			axes[0].set_xticks(x0)
 			axes[0].set_xticklabels(x0)
-			x1 = [1.2, 1.4, 1.6, 1.8]
+			x1 = [1.4, 1.7, 2.0]
 			axes[1].set_xticks(x1)
 			axes[1].set_xticklabels(x1)
 		else:
@@ -217,18 +229,24 @@ def plot(plotname, df, colors, display_legend="Yes", title=None,
 	if nbuckets == 2:
 		axes[0].set_xlabel('performance ratio', x=1.05)
 	elif nbuckets == 3:
-		axes[1].set_xlabel('performance ratio')
+		axes[0].set_xlabel('performance ratio', x=1.15)
 	else:
 		axes[0].set_xlabel('performance ratio')
 
 	if title != None:
 		axes[nbuckets-1].text(0.5, 0.2, title, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, bbox=dict(facecolor='white'))
 
+	return fig
+
 	#fig.tight_layout()	
-	fig.savefig(plotname + "_performance_profile.pdf", bbox_inches="tight", pad_inches=0.0)
+	# fig.savefig(plotname + "_performance_profile.pdf", bbox_inches="tight", pad_inches=0.0)
 	#fig.savefig(plotname + "_performance_profile.pgf", bbox_inches="tight", pad_inches=0.0)
 	#tikzplotlib.save(plotname + "_performance_profile.tikz")
-	plt.close(fig)
+	# plt.close(fig)
+
+def legend_below(fig, ncol):
+	sb.move_legend(loc="upper center", bbox_to_anchor=(0.5, -0.08), frameon=False, ncol=ncol)
+
 
 if __name__ == '__main__':
 	import sys, commons
