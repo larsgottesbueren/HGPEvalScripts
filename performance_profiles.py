@@ -22,7 +22,7 @@ timeout_ratio = max_objective-3
 performance_profile_fraction_scaling = 1
 
 # Returns for each algorithm the tau's at which the number of instances solved within tau*best jumps
-def performance_profiles(algos, instances, input_df, plotname="nothing", objective="km1"):
+def performance_profiles(algos, instances, input_df, objective="km1"):
 	df = input_df[input_df.algorithm.isin(algos)].copy()
 
 	instance_grouper = ["graph", "k", "epsilon"]
@@ -97,7 +97,7 @@ def performance_profiles(algos, instances, input_df, plotname="nothing", objecti
 	return output_df
 
 
-def plot(plotname, df, colors, display_legend="Yes", title=None, 
+def plot(df, colors, display_legend="Yes", title=None, 
          grid=True, width_scale=1.0, figsize=None, fontsize=10):
 	algos = df.algorithm.unique()
 	
@@ -148,10 +148,11 @@ def plot(plotname, df, colors, display_legend="Yes", title=None,
 			        algo_df["ratio"], algo_df["fraction"],
 			        color=colors[algo], lw=2.2, label=algo)
 
-	handles, labels = fig.axes[0].get_legend_handles_labels()
+
 	ncol = 2
 	if width_scale > 1.0:
 		ncol = 3
+	handles, labels = fig.axes[0].get_legend_handles_labels()
 	fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.08), frameon=False, ncol=ncol)
 	#if display_legend == "Yes":
 	#	axes[-1].legend(fancybox=True, framealpha=1.0, fontsize=legend_fontsize)
@@ -245,7 +246,11 @@ def plot(plotname, df, colors, display_legend="Yes", title=None,
 	# plt.close(fig)
 
 def legend_below(fig, ncol):
-	sb.move_legend(loc="upper center", bbox_to_anchor=(0.5, -0.08), frameon=False, ncol=ncol)
+	sb.move_legend(fig, loc="upper center", bbox_to_anchor=(0.5, -0.08), frameon=False, ncol=ncol)
+
+def legend_inside(fig, ncol):
+	sb.move_legend(fig, loc=(0.3, 0.3), fancybox=True, framealpha=1.0, frameon=True, ncol=ncol)
+
 
 
 if __name__ == '__main__':

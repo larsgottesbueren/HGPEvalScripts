@@ -56,7 +56,7 @@ def construct_plot(df, ax, baseline_algorithm, colors, algos=None, ylabel_fontsi
     for algo in algos:
         algo_df = df[df.algorithm == algo]
         n_instances_solved_by_algo = len(algo_df)
-        sb.lineplot(y=algo_df["relative_time"], x=range(n_instances_solved_by_algo), label=algo, color=colors[algo], ax=ax)
+        sb.lineplot(y=algo_df["relative_time"], x=range(n_instances_solved_by_algo), label=algo, color=colors[algo], ax=ax, lw=2.2)
 
     if ylabel_fontsize == None:
         ax.set_ylabel('slowdown rel. to ' + baseline_algorithm)
@@ -84,11 +84,11 @@ def construct_plot(df, ax, baseline_algorithm, colors, algos=None, ylabel_fontsi
     plt.xticks(custom_ticks)
 
 
-def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, ylabel_fontsize=None, seed_aggregator="mean", field='totalPartitionTime', legend=None):
+def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, ylabel_fontsize=None, seed_aggregator="mean", field='totalPartitionTime'):
     fig, ax = plt.subplots(figsize=figsize)
     construct_plot(df=df, ax=ax, baseline_algorithm=baseline_algorithm, colors=colors, algos=algos, ylabel_fontsize=ylabel_fontsize, seed_aggregator=seed_aggregator, field=field)
-    if legend == "NoLegend":
-        ax.legend().set_visible(False)
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.08), frameon=False, ncol=2)
     fig.savefig(plotname + "_relative_slowdown.pdf", bbox_inches='tight')
     #fig.savefig(plotname + ".pdf", bbox_inches='tight')
 
