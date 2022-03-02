@@ -67,7 +67,7 @@ def performance_profiles(algos, instances, input_df, objective="km1"):
 						else:
 							r = obj + 1
 			else:
-				print("timeout", G,k,algo)
+				# print("timeout", G,k,algo)
 				r = timeout_ratio
 			ratios[algo].append(r)
 			#if r > 1.1:

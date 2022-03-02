@@ -62,10 +62,16 @@ def scalability_plot(df, field, ax, thread_colors=None,
                      show_scatter=True, show_rolling_gmean=True, 
                      display_labels=True, display_legend=True,
                      xscale=None, yscale=None, alpha=0.2,
-                     seed_aggregator=None, window_size=50):
+                     seed_aggregator=None, window_size=50, filter_tiny_outlier_threshold=None):
     
     
     speedups = compute_speedups(df, field, seed_aggregator)
+    if filter_tiny_outlier_threshold != None:
+        x = len(speedups[speedups.speedup <= filter_tiny_outlier_threshold])
+        if x > 0:
+            print(x, "tiny outlier speedups below", filter_tiny_outlier_threshold, "were filtered")
+            speedups = speedups[speedups.speedup > filter_tiny_outlier_threshold]
+
     compute_windowed_gmeans(speedups, window_size)
     
     if thread_colors == None:

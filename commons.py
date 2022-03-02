@@ -3,6 +3,16 @@ import seaborn as sb
 import itertools
 
 
+def default_color_mapping():
+	algos = ["Mt-KaHyPar-D", "Mt-KaHyPar-Q", "hMetis-R", "KaHyPar-CA", "KaHyPar-HFC", "PaToH-D", "PaToH-Q", "Zoltan", "BiPart"]
+	mapping = construct_new_color_mapping(algos)
+
+	leftovers = ["Mt-KaHyPar-S", "Mt-KaHyPar-SDet", "Mt-KaHyPar-D-F", "Mt-KaHyPar-Q-F"]
+	extra_colors = ["dark purple", "fuchsia", "squash", "teal"]
+	for algo, color in zip(leftovers, extra_colors):
+		mapping[algo] = sb.xkcd_rgb[color]
+	return mapping
+
 def construct_new_color_mapping(algos):
 	return dict(zip(algos, sb.color_palette()))
 
@@ -16,8 +26,8 @@ def infer_instances_from_dataframe(df):
 	return list(itertools.product(hgs, ks, epss))
 
 def add_threads_to_algorithm_name(df):
-	if "threads" in df.columns and len(df["threads"].unique()) > 1:
-		df["algorithm"] = df["algorithm"] + "-" + df["threads"].astype(str)
+	if "threads" in df.columns:
+		df["algorithm"] = df["algorithm"] + " " + df["threads"].astype(str)
 
 def add_column_if_missing(df, column, value):
 	if not column in df.columns:
@@ -26,7 +36,7 @@ def add_column_if_missing(df, column, value):
 def conversion(df, options={}):
 	add_column_if_missing(df, 'failed', 'no')
 	add_column_if_missing(df, 'timeout', 'no')
-	df.rename(columns={'partitionTime' : 'totalPartitionTime'}, inplace=True)
+	df.rename(columns={'partitionTime' : 'totalPartitionTime', "num_threads" : "threads"}, inplace=True)
 
 	if "filter to threads" in options:
 		nthreads = int(options["filter to threads"])
