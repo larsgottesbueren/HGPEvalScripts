@@ -223,17 +223,18 @@ def print_speedups():
 def effectiveness_tests_plot(options, out_dir):
 	mt_kahypar_file_list = ["mt-kahypar-d-setA.csv", "mt-kahypar-q-setA.csv"]
 	others_file_list = ["hmetis_r_setA.csv", "kahypar_ca_setA.csv", "kahypar_hfc_setA.csv"]
-	df = commons.read_files(mt_kahypar_file_list)
-	df = df[df.threads == 10]
-	df2 = commons.read_files(others_file_list)
-	df = pd.concat([df, df2])
+	#df = commons.read_files(mt_kahypar_file_list)
+	#df = df[df.threads == 10]
+	#df2 = commons.read_files(others_file_list)
+	#df = pd.concat([df, df2])
 		
 	width = options["width"] / 2
 	aspect_ratio = 1.65
 	height = width / aspect_ratio
 	figsize=(width, height)
 
-	for algo_tuple in itertools.product(["Mt-KaHyPar-D", "Mt-KaHyPar-Q"], ["hMetis-R", "KaHyPar-CA", "KaHyPar-HFC"]):
+	#for algo_tuple in itertools.product(["Mt-KaHyPar-D", "Mt-KaHyPar-Q"], ["hMetis-R", "KaHyPar-CA", "KaHyPar-HFC"]):
+	for algo_tuple in [("Mt-KaHyPar-D", "KaHyPar-HFC")]:
 		algos = list(algo_tuple)
 		#virt_df = effectiveness_tests.create_virtual_instances(df, algos, num_repetitions=20)
 		#virt_df.to_csv("effectiveness-tests_" + algos[0] + "_" + algos[1] + ".csv")

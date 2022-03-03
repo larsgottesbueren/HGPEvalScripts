@@ -92,7 +92,6 @@ def performance_profiles(algos, instances, input_df, objective="km1"):
 		output.append((algo, (len(ratios[algo])-1) * performance_profile_fraction_scaling / n, ratios[algo][-1]))
 		# output.append((algo, len(ratios[algo]) * performance_profile_fraction_scaling / n, last_drawn_ratio))	# draw the step function to the rightmost x-value
 
-
 	output_df = pd.DataFrame(data=output, columns=["algorithm", "fraction", "ratio"])
 	return output_df
 
@@ -108,6 +107,8 @@ def plot(df, colors, display_legend="Yes", title=None,
 
 	base = math.ceil(math.log10(max_actual_ratio))
 	if (math.log10(max_actual_ratio).is_integer()):
+		base += 1
+	if base == 1:
 		base += 1
 	remapped_timeout_ratio = 10 ** base
 	remapped_imbalanced_ratio = 10 ** (base + 1)

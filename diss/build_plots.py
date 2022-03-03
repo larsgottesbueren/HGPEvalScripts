@@ -37,5 +37,12 @@ os.chdir('nlevel')
 nlevel.plots.run_all(options, out_dir + "/nlevel/")
 os.chdir(this_dir)
 
+# import default.plots
+os.chdir('default')
+#default.plots.run_all(options, out_dir + "/default/")
+os.chdir(this_dir)
 
-
+# import flows.plots
+os.chdir('flows')
+#default.plots.run_all(options, out_dir + "/flows/")
+os.chdir(this_dir)
