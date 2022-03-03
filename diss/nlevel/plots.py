@@ -1,5 +1,6 @@
 import performance_profiles
 import relative_runtimes_plot
+import effectiveness_tests
 import speedup_plots
 import commons
 import pandas as pd
@@ -7,6 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker
 import seaborn as sb
 import glob
+import itertools
 
 def infer(df, colors, figsize):
 	algos = commons.infer_algorithms_from_dataframe(df)
@@ -218,13 +220,33 @@ def print_speedups():
 		print(field)
 		speedup_plots.print_speedups(df=df, field=field, seed_aggregator="median", min_sequential_time = 0)
 	
+def effectiveness_tests_plot(options, out_dir):
+	mt_kahypar_file_list = ["mt-kahypar-d-setA.csv", "mt-kahypar-q-setA.csv"]
+	others_file_list = ["hmetis_r_setA.csv", "kahypar_ca_setA.csv", "kahypar_hfc_setA.csv"]
+	df = commons.read_files(mt_kahypar_file_list)
+	df = df[df.threads == 10]
+	df2 = commons.read_files(others_file_list)
+	df = pd.concat([df, df2])
+		
+	width = options["width"] / 2
+	aspect_ratio = 1.65
+	height = width / aspect_ratio
+	figsize=(width, height)
 
+	for algo_tuple in itertools.product(["Mt-KaHyPar-D", "Mt-KaHyPar-Q"], ["hMetis-R", "KaHyPar-CA", "KaHyPar-HFC"]):
+		algos = list(algo_tuple)
+		#virt_df = effectiveness_tests.create_virtual_instances(df, algos, num_repetitions=20)
+		#virt_df.to_csv("effectiveness-tests_" + algos[0] + "_" + algos[1] + ".csv")
+		virt_df = pd.read_csv("effectiveness-tests_" + algos[0] + "_" + algos[1] + ".csv")
+		fig = infer(virt_df, commons.default_color_mapping(), figsize)
+		fig.savefig(out_dir + "effectiveness-tests_" + algos[0] + "_" + algos[1] + ".pdf", bbox_inches="tight", pad_inches=0.0)
 
 def run_all(options, out_dir):
 	# max_batch_size(options, out_dir)
 	# mt_kahypar_speedup_plots(options, out_dir)
 	# increasing_threads(options, out_dir)
-	main_setB(options, out_dir)
-	main_setA(options, out_dir)
-	main_async(options, out_dir)
+	# main_setB(options, out_dir)
+	# main_setA(options, out_dir)
+	# main_async(options, out_dir)
 	# print_speedups()
+	effectiveness_tests_plot(options, out_dir)
