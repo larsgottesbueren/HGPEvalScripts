@@ -233,8 +233,8 @@ def effectiveness_tests_plot(options, out_dir):
 	height = width / aspect_ratio
 	figsize=(width, height)
 
-	#for algo_tuple in itertools.product(["Mt-KaHyPar-D", "Mt-KaHyPar-Q"], ["hMetis-R", "KaHyPar-CA", "KaHyPar-HFC"]):
-	for algo_tuple in [("Mt-KaHyPar-D", "KaHyPar-HFC")]:
+	for algo_tuple in itertools.product(["Mt-KaHyPar-D", "Mt-KaHyPar-Q"], ["hMetis-R", "KaHyPar-CA", "KaHyPar-HFC"]):
+	#for algo_tuple in [("Mt-KaHyPar-D", "KaHyPar-HFC")]:
 		algos = list(algo_tuple)
 		#virt_df = effectiveness_tests.create_virtual_instances(df, algos, num_repetitions=20)
 		#virt_df.to_csv("effectiveness-tests_" + algos[0] + "_" + algos[1] + ".csv")
