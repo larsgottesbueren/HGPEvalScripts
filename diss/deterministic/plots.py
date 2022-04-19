@@ -206,9 +206,9 @@ def print_speedups():
 
 
 def run_all(options, out_dir):
-	price_of_determinism(options, out_dir)
-	parameter_study(options, out_dir)
-	bipart_speedup_plots(options, out_dir)
-	mt_kahypar_speedup_plots(options, out_dir)
-	main(options, out_dir)
+	#price_of_determinism(options, out_dir)
+	#parameter_study(options, out_dir)
+	#bipart_speedup_plots(options, out_dir)
+	#mt_kahypar_speedup_plots(options, out_dir)
+	#main(options, out_dir)
 	print_speedups()

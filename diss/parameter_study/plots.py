@@ -12,8 +12,6 @@ import itertools
 
 from pathlib import Path
 
-
-
 def infer(df, figsize, colors=None):
 	algos = commons.infer_algorithms_from_dataframe(df)
 	if colors == None:

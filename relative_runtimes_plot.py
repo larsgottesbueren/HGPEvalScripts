@@ -62,12 +62,11 @@ def compute_relative_runtimes(df, algos, baseline_algorithm, field, seed_aggrega
     if (math.log10(min_ratio).is_integer()):
         base -= 1
     baseline_timeout_ratio = 10 ** base
-    print(min_ratio, baseline_timeout_ratio, max_ratio, algo_timeout_ratio)
+    # print(min_ratio, baseline_timeout_ratio, max_ratio, algo_timeout_ratio)
 
     df["relative_time"].replace(to_replace={baseline_timeout : baseline_timeout_ratio, algo_timeout : algo_timeout_ratio}, inplace=True)
     show_algo_timeout = df["relative_time"].max() == algo_timeout_ratio
     show_baseline_timeout = df["relative_time"].min() == baseline_timeout_ratio
-    print(show_algo_timeout, show_baseline_timeout)
 
     df.sort_values(by=["relative_time"], inplace=True)
 
@@ -120,7 +119,7 @@ def construct_plot(df, ax, baseline_algorithm, colors, algos=None, ylabel_fontsi
     if n_instances % step != 0:
         custom_ticks.append(n_instances)
 
-    plt.xticks(custom_ticks)
+    # plt.xticks(custom_ticks)
 
     ticks = [10 ** i for i in range(int(math.log10(baseline_timeout_ratio)) + 1, int(math.log10(algo_timeout_ratio)))] # no -1 in the end since it's exclusive!
     tick_labels = copy.copy(ticks)

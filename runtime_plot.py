@@ -22,7 +22,7 @@ def plot(df, colors, algo_order, plot_name=''):
 	
 	plt.setp(ax.xaxis.get_majorticklabels(), rotation=20, ha="right", rotation_mode="anchor")
 	#ax.set_yscale('cuberoot')
-	#ax.set_yscale('fifthroot')
+	# ax.set_yscale('fifthroot')
 	ax.set_yscale('log')
 	#ax.set(yticks=[0, 1, 20, 75, 250, 750, 2500, 10000, 28800])
 	ax.set_ylabel('Time [s]')

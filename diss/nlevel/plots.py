@@ -214,8 +214,8 @@ def main_async(options, out_dir):
 	fig.savefig(out_dir + prefix + "mt-kahypar-q_relative_slowdown.pdf", bbox_inches='tight', pad_inches=0.0)
 
 def print_speedups():
-	df = pd.read_csv('scalability.csv')
-	fields = ["partitionTime", "preprocessingTime", "coarseningTime", "ipTime", "lpTime"]#, "fmTime"]
+	df = commons.read_files(list(glob.glob("mt_kahypar_q_*_scaling.csv")))
+	fields = ["totalPartitionTime", "coarsening_time", "initial_partitioning_time", "batch_uncontraction_time", "label_propagation_time", "fm_time"]
 	for field in fields:
 		print(field)
 		speedup_plots.print_speedups(df=df, field=field, seed_aggregator="median", min_sequential_time = 0)
@@ -223,10 +223,10 @@ def print_speedups():
 def effectiveness_tests_plot(options, out_dir):
 	mt_kahypar_file_list = ["mt-kahypar-d-setA.csv", "mt-kahypar-q-setA.csv"]
 	others_file_list = ["hmetis_r_setA.csv", "kahypar_ca_setA.csv", "kahypar_hfc_setA.csv"]
-	#df = commons.read_files(mt_kahypar_file_list)
-	#df = df[df.threads == 10]
-	#df2 = commons.read_files(others_file_list)
-	#df = pd.concat([df, df2])
+	df = commons.read_files(mt_kahypar_file_list)
+	df = df[df.threads == 10]
+	df2 = commons.read_files(others_file_list)
+	df = pd.concat([df, df2])
 		
 	width = options["width"] / 2
 	aspect_ratio = 1.65
@@ -236,11 +236,27 @@ def effectiveness_tests_plot(options, out_dir):
 	for algo_tuple in itertools.product(["Mt-KaHyPar-D", "Mt-KaHyPar-Q"], ["hMetis-R", "KaHyPar-CA", "KaHyPar-HFC"]):
 	#for algo_tuple in [("Mt-KaHyPar-D", "KaHyPar-HFC")]:
 		algos = list(algo_tuple)
-		#virt_df = effectiveness_tests.create_virtual_instances(df, algos, num_repetitions=20)
-		#virt_df.to_csv("effectiveness-tests_" + algos[0] + "_" + algos[1] + ".csv")
-		virt_df = pd.read_csv("effectiveness-tests_" + algos[0] + "_" + algos[1] + ".csv")
+		virt_df = effectiveness_tests.create_virtual_instances(df, algos, num_repetitions=20)
+		# virt_df.to_csv("effectiveness-tests_" + algos[0] + "_" + algos[1] + ".csv")
+		# virt_df = pd.read_csv("effectiveness-tests_" + algos[0] + "_" + algos[1] + ".csv")
 		fig = infer(virt_df, commons.default_color_mapping(), figsize)
 		fig.savefig(out_dir + "effectiveness-tests_" + algos[0] + "_" + algos[1] + ".pdf", bbox_inches="tight", pad_inches=0.0)
+
+def effectiveness_tests_mt_kahypar_variants():
+	mt_kahypar_file_list = ["mt-kahypar-d-setA.csv", "mt-kahypar-q-setA.csv"]
+	df = commons.read_files(mt_kahypar_file_list)
+	df = df[df.threads == 10]
+	algos = ["Mt-KaHyPar-D", "Mt-KaHyPar-Q"]
+	virt_df = effectiveness_tests.create_virtual_instances(df, algos, num_repetitions=20)
+
+	width = 6 / 2
+	aspect_ratio = 1.65
+	height = width / aspect_ratio
+	figsize=(width, height)
+
+	fig = infer(virt_df, commons.default_color_mapping(), figsize)
+	fig.savefig("effectiveness-tests_" + algos[0] + "_" + algos[1] + ".pdf", bbox_inches="tight", pad_inches=0.0)
+
 
 def run_all(options, out_dir):
 	# max_batch_size(options, out_dir)
@@ -250,4 +266,6 @@ def run_all(options, out_dir):
 	# main_setA(options, out_dir)
 	# main_async(options, out_dir)
 	# print_speedups()
-	effectiveness_tests_plot(options, out_dir)
+	# effectiveness_tests_plot(options, out_dir)
+	effectiveness_tests_mt_kahypar_variants()
+

@@ -68,7 +68,11 @@ class FifthRootScale(mscale.ScaleBase):
         is_separable = True
 
         def transform_non_affine(self, a): 
+            print("a=", a)
             x = np.array(a)
+            print("x=", x)
+            res = np.sign(x) * (np.abs(x)**0.2)
+            print("res=",res)
             return np.sign(x) * (np.abs(x)**0.2)
 
         def inverted(self):

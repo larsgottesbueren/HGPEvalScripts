@@ -96,8 +96,8 @@ def performance_profiles(algos, instances, input_df, objective="km1"):
 	return output_df
 
 
-def plot(df, colors, display_legend="Yes", title=None, 
-         grid=True, width_scale=1.0, figsize=None, fontsize=10):
+def plot(df, colors, fig, external_subplot, display_legend="Yes", title=None, 
+         grid=True, width_scale=1.0):
 	algos = df.algorithm.unique()
 	
 	max_ratio = df.ratio.max()
@@ -112,6 +112,7 @@ def plot(df, colors, display_legend="Yes", title=None,
 		base += 1
 	remapped_timeout_ratio = 10 ** base
 	remapped_imbalanced_ratio = 10 ** (base + 1)
+	print(max_actual_ratio)
 	if show_timeout_tick:
 		print("do remap. new timeout ratio", remapped_timeout_ratio)
 		df.ratio.replace(to_replace={timeout_ratio : remapped_timeout_ratio, imbalanced_ratio : remapped_imbalanced_ratio}, inplace=True)
@@ -133,28 +134,34 @@ def plot(df, colors, display_legend="Yes", title=None,
 
 	width_ratios = [1.0 / nbuckets for i in range(nbuckets)]
 	if nbuckets == 3:
-		width_ratios = [0.4, 0.3, 0.3]
+		width_ratios = [0.45, 0.3, 0.25]
 	elif nbuckets == 2:
 		width_ratios = [0.65, 0.35]
 
 
-	fig = plt.figure(figsize=figsize)
-	gs = grd.GridSpec(nrows=1, ncols=nbuckets, wspace=0.0, hspace=0.0, width_ratios=width_ratios)
-	axes = [plt.subplot(gs[i]) for i in range(nbuckets)]
+	# fig = plt.figure(figsize=figsize)
+	
+	gs = grd.GridSpecFromSubplotSpec(nrows=1, ncols=nbuckets, subplot_spec=external_subplot, wspace=0.0, hspace=0.0, width_ratios=width_ratios)
+	axes = [plt.Subplot(fig, gs[i]) for i in range(nbuckets)]
 
 	for algo in algos:
 		algo_df = df[df.algorithm == algo]
 		for i, ax in enumerate(axes):
 			ax.plot(
 			        algo_df["ratio"], algo_df["fraction"],
-			        color=colors[algo], lw=2.2, label=algo)
+			        color=colors[algo], lw=2.2, label=algo,
+			        drawstyle='steps-post'
+			        )
 
 
 	ncol = 2
 	if width_scale > 1.0:
 		ncol = 3
-	handles, labels = fig.axes[0].get_legend_handles_labels()
-	fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.08), frameon=False, ncol=ncol)
+	
+	handles, labels = axes[0].get_legend_handles_labels()
+	
+	# fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.08), frameon=False, ncol=ncol)
+	
 	#if display_legend == "Yes":
 	#	axes[-1].legend(fancybox=True, framealpha=1.0, fontsize=legend_fontsize)
 		#if len(algos) < 5:
@@ -238,7 +245,11 @@ def plot(df, colors, display_legend="Yes", title=None,
 	if title != None:
 		axes[nbuckets-1].text(0.5, 0.2, title, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, bbox=dict(facecolor='white'))
 
-	return fig
+	for ax in axes:
+		fig.add_subplot(ax)
+
+	return handles, labels
+	# return fig
 
 	#fig.tight_layout()	
 	# fig.savefig(plotname + "_performance_profile.pdf", bbox_inches="tight", pad_inches=0.0)
