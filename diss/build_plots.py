@@ -54,7 +54,11 @@ def print_gmean(file, seed_aggregator="mean"):
 
 options = {
 	'width' 	: 5.795, 		# inches. full paper width (two columns)
+	'default_aspect_ratio' : 2.65
 }
+options['height'] = options['width'] / options['default_aspect_ratio']
+options['figsize'] = (options['width'], options['height'])
+options['half_figsize'] = (options['width'] / 2, options['height'])
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='libertine')
@@ -82,7 +86,7 @@ os.chdir(this_dir)
 
 import nlevel.plots
 os.chdir('nlevel')
-# nlevel.plots.run_all(options, out_dir + "/nlevel/")
+#nlevel.plots.run_all(options, out_dir + "/nlevel/")
 os.chdir(this_dir)
 
 import default.plots

@@ -4,12 +4,15 @@ import seaborn as sb
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as grd
 import copy
+import commons
 
 import scales
 
 import scipy.stats
 import math
 import numpy as np
+
+from matplotlib.ticker import (AutoMinorLocator, FixedLocator)
 
 #import tikzplotlib
 
@@ -96,7 +99,7 @@ def performance_profiles(algos, instances, input_df, objective="km1"):
 	return output_df
 
 
-def plot(df, colors, fig, external_subplot, display_legend="Yes", title=None, 
+def plot(df, colors, fig, external_subplot, display_legend=True, title=None, 
          grid=True, width_scale=1.0):
 	algos = df.algorithm.unique()
 	
@@ -134,7 +137,7 @@ def plot(df, colors, fig, external_subplot, display_legend="Yes", title=None,
 
 	width_ratios = [1.0 / nbuckets for i in range(nbuckets)]
 	if nbuckets == 3:
-		width_ratios = [0.45, 0.3, 0.25]
+		width_ratios = [0.4, 0.3, 0.3]
 	elif nbuckets == 2:
 		width_ratios = [0.65, 0.35]
 
@@ -159,8 +162,9 @@ def plot(df, colors, fig, external_subplot, display_legend="Yes", title=None,
 		ncol = 3
 	
 	handles, labels = axes[0].get_legend_handles_labels()
-	
-	# fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.08), frameon=False, ncol=ncol)
+
+	if display_legend:
+		fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.08), frameon=False, ncol=ncol)
 	
 	#if display_legend == "Yes":
 	#	axes[-1].legend(fancybox=True, framealpha=1.0, fontsize=legend_fontsize)
@@ -195,20 +199,18 @@ def plot(df, colors, fig, external_subplot, display_legend="Yes", title=None,
 			axes[i].grid(b=True, axis='both', which='major', ls='dashed')
 
 	if nbuckets > 1:
-		if width_scale > 1.0:
-			x0 = [1, 1.025, 1.05, 1.075, 1.1]
-			axes[0].set_xticks(x0)
-			axes[0].set_xticklabels(x0)
-			x1 = [1.4, 1.7, 2.0]
-			axes[1].set_xticks(x1)
-			axes[1].set_xticklabels(x1)
-		else:
-			axes[0].set_xticks([1, 1.05, 1.1])
-			ax1_xticks = [1.5, 2.0]
-			if nbuckets == 3 and 2 in axes[2].get_xticks():
-				ax1_xticks.remove(2.0)
-			axes[1].set_xticks(ax1_xticks)
-			axes[1].set_xticklabels(ax1_xticks)
+		x0 = [1, 1.05, 1.1]
+		
+		axes[0].xaxis.set_minor_locator(AutoMinorLocator(5))
+		axes[0].set_xticks(x0)
+		axes[0].set_xticklabels(x0)
+		
+		axes[1].xaxis.set_minor_locator(AutoMinorLocator(3))
+		ax1_xticks = [1.4, 1.7, 2]
+		if nbuckets == 3 and 2 in axes[2].get_xticks():
+			ax1_xticks.remove(2)
+		axes[1].set_xticks(ax1_xticks)
+		axes[1].set_xticklabels(ax1_xticks)
 
 	
 	if last_drawn_ratio >= 500 or show_timeout_tick:
@@ -216,12 +218,14 @@ def plot(df, colors, fig, external_subplot, display_legend="Yes", title=None,
 		#axes[nbuckets - 1].set_xscale('fifthroot')
 	if show_timeout_tick:
 		ticks = [10 ** i for i in range(1, base)]
-		tick_labels = copy.copy(ticks)
+		tick_labels = [r'$10^' + str(i) + r'$' for i in range(1, base)]
 		ticks.append(remapped_timeout_ratio)
 		tick_labels.append(R'\ding{99}')
 		if show_imbalanced_tick:
 			ticks.append(remapped_imbalanced_ratio)
 			tick_labels.append(R'\ding{56}')
+
+	
 		axes[nbuckets - 1].set_xticks(ticks)
 		axes[nbuckets - 1].set_xticklabels(tick_labels)
 	
@@ -231,7 +235,7 @@ def plot(df, colors, fig, external_subplot, display_legend="Yes", title=None,
 
 	axes[0].set_ylabel('fraction of instances')
 	for ax in axes:			# generate the ticks for each bucket, so that the grid looks good!
-		ax.set_yticks([0.0, 0.25, 0.5, 0.75, 1.0])
+		ax.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
 	for ax in axes[1:]:
 		ax.set_yticklabels(ax.get_yticklabels(), visible=False)
 		ax.yaxis.set_ticks_position('none')
@@ -256,6 +260,22 @@ def plot(df, colors, fig, external_subplot, display_legend="Yes", title=None,
 	#fig.savefig(plotname + "_performance_profile.pgf", bbox_inches="tight", pad_inches=0.0)
 	#tikzplotlib.save(plotname + "_performance_profile.tikz")
 	# plt.close(fig)
+
+def infer_plot(df, fig, external_subplot=None, colors=None, algos=None, instances=None, display_legend=True):
+	if algos == None:
+		algos = commons.infer_algorithms_from_dataframe(df)
+	if instances == None:
+		instances = commons.infer_instances_from_dataframe(df)
+	if colors == None:
+		colors = commons.infer_color_mapping(algos)
+	if external_subplot == None:
+		outer_grid = grd.GridSpec(nrows=1, ncols=1, wspace=0.0, hspace=0.0, width_ratios=[1.0])
+		external_subplot = outer_grid[0]
+	ratios_df = performance_profiles(algos, instances, df, objective="km1")
+	handles, labels = plot(ratios_df, fig=fig, external_subplot=external_subplot, colors=colors, display_legend=display_legend)
+	if display_legend:
+		legend_inside(fig, ncol=1)
+	return handles, labels
 
 def legend_below(fig, ncol):
 	sb.move_legend(fig, loc="upper center", bbox_to_anchor=(0.5, -0.08), frameon=False, ncol=ncol)

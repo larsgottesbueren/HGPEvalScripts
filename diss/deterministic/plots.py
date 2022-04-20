@@ -4,79 +4,55 @@ import speedup_plots
 import commons
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as grd
 import matplotlib.ticker
 import seaborn as sb
 
 def price_of_determinism(options, out_dir):
-	width = options["width"] / 2
-	aspect_ratio = 1.65
-	height = width / aspect_ratio
-	figsize=(width, height)
-
 	df = commons.read_and_convert("component_comparison_preprocessing.csv")
-	algos = commons.infer_algorithms_from_dataframe(df)
-	instances = commons.infer_instances_from_dataframe(df)
-	ratios_df = performance_profiles.performance_profiles(algos, instances, df, objective="km1")
-	fig = performance_profiles.plot(ratios_df, colors=commons.construct_new_color_mapping(algos), figsize=figsize)
-	performance_profiles.legend_inside(fig, ncol=1)
+	fig = plt.figure(figsize=options['half_figsize'])
+	performance_profiles.infer_plot(df, fig, algos=algos, colors=colors)
 	fig.savefig(out_dir + "component_comparison_preprocessing.pdf", bbox_inches="tight", pad_inches=0.0)
 
 	df = commons.read_and_convert("component_comparison_refinement.csv")
-	algos = commons.infer_algorithms_from_dataframe(df)
-	instances = commons.infer_instances_from_dataframe(df)
-	ratios_df = performance_profiles.performance_profiles(algos, instances, df, objective="km1")
-	fig = performance_profiles.plot(ratios_df, colors=commons.construct_new_color_mapping(algos), figsize=figsize)
-	performance_profiles.legend_inside(fig, ncol=1)
+	fig = plt.figure(figsize=options['half_figsize'])
+	performance_profiles.infer_plot(df, fig, algos=algos, colors=colors)
 	fig.savefig(out_dir + "component_comparison_refinement.pdf", bbox_inches="tight", pad_inches=0.0)
 
 	df = commons.read_and_convert("component_comparison_coarsening.csv")
-	algos = commons.infer_algorithms_from_dataframe(df)
-	instances = commons.infer_instances_from_dataframe(df)
-	ratios_df = performance_profiles.performance_profiles(algos, instances, df, objective="km1")
-	fig = performance_profiles.plot(ratios_df, colors=commons.construct_new_color_mapping(algos), figsize=figsize)
-	performance_profiles.legend_inside(fig, ncol=1)
+	fig = plt.figure(figsize=options['half_figsize'])
+	performance_profiles.infer_plot(df, fig, algos=algos, colors=colors)
 	fig.savefig(out_dir + "component_comparison_coarsening.pdf", bbox_inches="tight", pad_inches=0.0)
 	# relative_runtimes_plot.plot("component_comparison_coarsening", df, "Mt-KaHyPar-SDet", colors= commons.construct_new_color_mapping(algos), field="coarseningTime")
 
 
 def parameter_study(options, out_dir):
-	third_width = options["width"] / 2
-	aspect_ratio = 1.65
-	height = third_width / aspect_ratio
-	figsize=(third_width, height)
-
+	fig, outer_grid = plt.subplots(nrows=2, ncols=2, figsize=(options['width'], 2 * options['height']))
+	for ax in outer_grid.ravel():	# this is necessary when using subplots instead of gridspec
+		ax.set_axis_off()
+	
 	# refinement
 	df = commons.read_and_convert("deterministic_parameterstudy_synclp_subrounds.csv")
-	algos = commons.infer_algorithms_from_dataframe(df)
-	instances = commons.infer_instances_from_dataframe(df)
-	ratios_df = performance_profiles.performance_profiles(algos, instances, df, objective="km1")
-	fig = performance_profiles.plot(ratios_df, colors=commons.construct_new_color_mapping(algos), figsize=figsize)
-	fig.savefig(out_dir + "refinement_subrounds.pdf", bbox_inches="tight", pad_inches=0.0)
+	handles, labels = performance_profiles.infer_plot(df, fig, external_subplot=outer_grid[0][1], display_legend=False)
+	outer_grid[0][1].legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.22), frameon=False, ncol=2)
 
 	# coarsening
 	df = commons.read_and_convert("deterministic_parameterstudy_coarsening_subrounds.csv")
-	algos = commons.infer_algorithms_from_dataframe(df)
-	instances = commons.infer_instances_from_dataframe(df)
-	ratios_df = performance_profiles.performance_profiles(algos, instances, df, objective="km1")
-	fig = performance_profiles.plot(ratios_df, colors=commons.construct_new_color_mapping(algos), figsize=figsize)
-	fig.savefig(out_dir + "coarsening_subrounds.pdf", bbox_inches="tight", pad_inches=0.0)
+	handles, labels = performance_profiles.infer_plot(df, fig, external_subplot=outer_grid[1,0], display_legend=False)
+	outer_grid[1][0].legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.22), frameon=False, ncol=2)
 
 	# preprocessing
 	df = commons.read_and_convert("deterministic_parameterstudy_prepro_subrounds.csv")
-	algos = commons.infer_algorithms_from_dataframe(df)
-	instances = commons.infer_instances_from_dataframe(df)
-	ratios_df = performance_profiles.performance_profiles(algos, instances, df, objective="km1")
-	fig = performance_profiles.plot(ratios_df, colors=commons.construct_new_color_mapping(algos), figsize=figsize)
-	fig.savefig(out_dir + "preprocessing_subrounds.pdf", bbox_inches="tight", pad_inches=0.0)
-
+	handles, labels = performance_profiles.infer_plot(df, fig, external_subplot=outer_grid[0,0], display_legend=False)
+	outer_grid[0][0].legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.22), frameon=False, ncol=2)
+	
 	# preprocessing vs no preprocessing 
 	df = commons.read_and_convert("no_preprocessing.csv")
-	algos = commons.infer_algorithms_from_dataframe(df)
-	instances = commons.infer_instances_from_dataframe(df)
-	ratios_df = performance_profiles.performance_profiles(algos, instances, df, objective="km1")
-	fig = performance_profiles.plot(ratios_df, colors=commons.construct_new_color_mapping(algos), figsize=figsize)
-	performance_profiles.legend_below(fig, ncol=1)
-	fig.savefig(out_dir + "preprocessing_impact.pdf", bbox_inches="tight", pad_inches=0.0)
+	handles, labels = performance_profiles.infer_plot(df, fig, external_subplot=outer_grid[1,1], display_legend=False)
+	outer_grid[1][1].legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.22), frameon=False, ncol=1)
+
+	plt.subplots_adjust(wspace=0.22, hspace=0.6)
+	fig.savefig(out_dir + "parameter_study.pdf", bbox_inches="tight", pad_inches=0.0)
 
 def bipart_speedup_plots(options, out_dir):
 	paper_width = options['width'] * 0.7
@@ -166,35 +142,15 @@ def mt_kahypar_speedup_plots(options, out_dir):
 
 
 def main(options, out_dir):
-	width = options["width"] * 0.8
-	aspect_ratio = 2.7
-	height = width / aspect_ratio
-	figsize = (width, height)
-
-	# main comparison
-	df = commons.read_files(["speed_deterministic.csv", "speed_non_deterministic.csv", "bipart-mt-bench.csv", "default.csv", "zoltan-mt-bench.csv"])
+	df = commons.read_files(["speed_deterministic.csv", "speed_non_deterministic.csv", "bipart-64.csv", "default.csv", "zoltan-mt-bench.csv"])
 	df = df[df.timeout=="no"]
 	df = df[df.threads == 64].copy()
-	algos = commons.infer_algorithms_from_dataframe(df)
-	colors = commons.default_color_mapping()
 	# reorder algorithms for legend after color mapping
 	algos = ["Mt-KaHyPar-D", "Mt-KaHyPar-SDet", "Mt-KaHyPar-S", "Zoltan", "BiPart"]
-	instances = commons.infer_instances_from_dataframe(df)
-		
-	## separate plots
-	ratios_df = performance_profiles.performance_profiles(algos, instances, df, objective="km1")
-	fig = performance_profiles.plot(ratios_df, colors=colors, figsize=figsize, width_scale=2.0)
-	fig.savefig(out_dir + "sdet_comparison_performance_profile.pdf", bbox_inches="tight", pad_inches=0.0)
-	
-	aspect_ratio = 1.2
-	width = options["width"] / 2
-	height = width / aspect_ratio
-	figsize = (width, height)
-	fig, ax = plt.subplots(figsize=figsize)
-	relative_runtimes_plot.construct_plot(df=df, ax=ax, baseline_algorithm="Mt-KaHyPar-SDet", colors=colors, algos=algos, 
-	                                      seed_aggregator="mean", field="totalPartitionTime", time_limit=7200)
-	sb.move_legend(ax, loc="upper center", bbox_to_anchor=(0.5, -0.25), frameon=False, ncol=2)
-	fig.savefig(out_dir + "sdet_comparison_relative_slowdown.pdf", bbox_inches='tight', pad_inches=0.0)
+
+	fig = plt.figure(figsize=options['figsize'])
+	cpprs.combined_pp_rs(df, fig, baseline="Mt-KaHyPar-SDet", algos=algos)
+	fig.savefig(out_dir + 'deterministic.pdf', bbox_inches='tight', pad_inches=0.0)
 
 def print_speedups():
 	df = pd.read_csv('scalability.csv')
@@ -206,9 +162,9 @@ def print_speedups():
 
 
 def run_all(options, out_dir):
-	#price_of_determinism(options, out_dir)
-	#parameter_study(options, out_dir)
-	#bipart_speedup_plots(options, out_dir)
-	#mt_kahypar_speedup_plots(options, out_dir)
-	#main(options, out_dir)
+	price_of_determinism(options, out_dir)
+	parameter_study(options, out_dir)
+	bipart_speedup_plots(options, out_dir)
+	mt_kahypar_speedup_plots(options, out_dir)
+	main(options, out_dir)
 	print_speedups()

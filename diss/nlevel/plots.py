@@ -10,13 +10,7 @@ import seaborn as sb
 import glob
 import itertools
 
-def infer(df, colors, figsize):
-	algos = commons.infer_algorithms_from_dataframe(df)
-	instances = commons.infer_instances_from_dataframe(df)
-	ratios_df = performance_profiles.performance_profiles(algos, instances, df, objective="km1")
-	fig = performance_profiles.plot(ratios_df, colors=colors, figsize=figsize)
-	performance_profiles.legend_inside(fig, ncol=1)
-	return fig
+import combine_performance_profile_and_relative_slowdown as cpprs
 
 def max_batch_size(options, out_dir):
 	width = options["width"] / 2
@@ -28,13 +22,18 @@ def max_batch_size(options, out_dir):
 	all_algos = commons.infer_algorithms_from_dataframe(df)
 	colors = commons.construct_new_color_mapping(all_algos)
 
-	fig = infer(df[(df.max_batch_size == 1) | (df.max_batch_size == 100)], colors, figsize)
+	fig = plt.figure(figsize=options['half_figsize'])
+	performance_profiles.infer_plot(df[(df.max_batch_size == 1) | (df.max_batch_size == 100)], fig, colors=colors)
 	fig.savefig(out_dir + "max_batch_size_1_100.pdf", bbox_inches="tight", pad_inches=0.0)
 
-	fig = infer(df[(df.max_batch_size == 100) | (df.max_batch_size == 200) | (df.max_batch_size == 1000)], colors, figsize)
+	fig = plt.figure(figsize=options['half_figsize'])
+	performance_profiles.infer_plot(df[(df.max_batch_size == 100) | (df.max_batch_size == 200) | (df.max_batch_size == 1000)], 
+	                                fig, colors=colors)
 	fig.savefig(out_dir + "max_batch_size_100_200_1000.pdf", bbox_inches="tight", pad_inches=0.0)
 
-	fig = infer(df[(df.max_batch_size == 200) | (df.max_batch_size == 1000) | (df.max_batch_size == 10000)], colors, figsize)
+	fig = plt.figure(figsize=options['half_figsize'])
+	performance_profiles.infer_plot(df[(df.max_batch_size == 200) | (df.max_batch_size == 1000) | (df.max_batch_size == 10000)],
+									fig, colors=colors)
 	fig.savefig(out_dir + "max_batch_size_200_1000_10000.pdf", bbox_inches="tight", pad_inches=0.0)
 
 
@@ -102,116 +101,43 @@ def increasing_threads(options, out_dir):
 	color_mapping_algos = ["Mt-KaHyPar-Q " + str(i) for i in [4,16,64, 1]]
 	colors = commons.construct_new_color_mapping(color_mapping_algos)
 	
-	width = options["width"] / 2
-	aspect_ratio = 1.65
-	height = width / aspect_ratio
-	figsize=(width, height)
-
-	instances = commons.infer_instances_from_dataframe(df)
-	ratios_df = performance_profiles.performance_profiles(algos, instances, df, objective="km1")
-	fig = performance_profiles.plot(ratios_df, colors=colors, figsize=figsize)
-	performance_profiles.legend_inside(fig, ncol=1)
+	fig = plt.figure(figsize=options['half_figsize'])
+	performance_profiles.infer_plot(df, fig, algos=algos, colors=colors)
 	fig.savefig(out_dir + "increasing_threads.pdf", bbox_inches="tight", pad_inches=0.0)
 
+	
 def main_setA(options, out_dir):
-	prefix = "setA-"
-	time_limit = 28800
 	mt_kahypar_file_list = ["mt-kahypar-d-setA.csv", "mt-kahypar-q-setA.csv"]
 	others_file_list = ["hmetis_r_setA.csv", "kahypar_ca_setA.csv", "kahypar_hfc_setA.csv", "patoh_d_setA.csv", "patoh_q_setA.csv"]
 
-	width = options["width"] * 0.8
-	aspect_ratio = 2.7
-	height = width / aspect_ratio
-	figsize = (width, height)
-
-	# main comparison
 	df = commons.read_files(mt_kahypar_file_list)
 	df = df[df.threads == 10]
 	
 	df2 = commons.read_files(others_file_list)
 	df = pd.concat([df, df2])
 
-	algos = commons.infer_algorithms_from_dataframe(df)
-	colors = commons.default_color_mapping()
-	instances = commons.infer_instances_from_dataframe(df)
-		
-	## separate plots
-	ratios_df = performance_profiles.performance_profiles(algos, instances, df, objective="km1")
-	fig = performance_profiles.plot(ratios_df, colors=colors, figsize=figsize, width_scale=2.0)
-	fig.savefig(out_dir + prefix + "mt-kahypar-q_performance-profile.pdf", bbox_inches="tight", pad_inches=0.0)
-	
-	width = options['width'] * 0.5
-	aspect_ratio = 1.2
-	height = width / aspect_ratio
-	figsize = (width, height)
-	fig, ax = plt.subplots(figsize=figsize)
-	relative_runtimes_plot.construct_plot(df=df, ax=ax, baseline_algorithm="Mt-KaHyPar-Q", colors=colors, algos=algos, 
-	                                      seed_aggregator="mean", field="totalPartitionTime", time_limit=time_limit)
-	sb.move_legend(ax, loc="upper center", bbox_to_anchor=(0.5, -0.15), frameon=False, ncol=2)
-	fig.savefig(out_dir + prefix + "mt-kahypar-q_relative_slowdown.pdf", bbox_inches='tight', pad_inches=0.0)
+	fig = plt.figure(figsize=options['figsize'])
+	cpprs.combined_pp_rs(df, fig, baseline="Mt-KaHyPar-Q", time_limit=28800)
+	fig.savefig(out_dir + "setA.pdf", bbox_inches="tight", pad_inches=0.0)
 
 def main_setB(options, out_dir):
-	prefix = "setB-"
-	time_limit = 7200
-	file_list = ["mt-kahypar-d-64.csv", "mt-kahypar-q-64.csv", "bipart-mt-bench.csv", "zoltan-mt-bench.csv"] # add Patoh-D
-	width = options["width"] * 0.8 
-	aspect_ratio = 2.7
-	height = width / aspect_ratio
-	figsize = (width, height)
+	df = commons.read_files(["mt-kahypar-d-64.csv", "mt-kahypar-q-64.csv", "bipart-64.csv", "zoltan-mt-bench.csv", "patoh-d-mt-bench.csv"])
 
-	# main comparison
-	df = commons.read_files(file_list)
-	algos = commons.infer_algorithms_from_dataframe(df)
-	colors = commons.default_color_mapping()
-	instances = commons.infer_instances_from_dataframe(df)
-		
-	## separate plots
-	ratios_df = performance_profiles.performance_profiles(algos, instances, df, objective="km1")
-	fig = performance_profiles.plot(ratios_df, colors=colors, figsize=figsize, width_scale=2.0)
-	fig.savefig(out_dir + prefix + "mt-kahypar-q_performance-profile.pdf", bbox_inches="tight", pad_inches=0.0)
-
-	## TODO one plot with fewer algos
-	
-	width = options['width'] * 0.5
-	aspect_ratio = 1.2
-	height = width / aspect_ratio
-	figsize = (width, height)
-	fig, ax = plt.subplots(figsize=figsize)
-	relative_runtimes_plot.construct_plot(df=df, ax=ax, baseline_algorithm="Mt-KaHyPar-Q", colors=colors, algos=algos, 
-	                                      seed_aggregator="mean", field="totalPartitionTime", time_limit=time_limit)
-	sb.move_legend(ax, loc="upper center", bbox_to_anchor=(0.5, -0.15), frameon=False, ncol=2)
-	fig.savefig(out_dir + prefix + "mt-kahypar-q_relative_slowdown.pdf", bbox_inches='tight', pad_inches=0.0)
+	fig = plt.figure(figsize=options['figsize'])
+	cpprs.combined_pp_rs(df, fig, baseline="Mt-KaHyPar-D")
+	fig.savefig(out_dir + "setB.pdf", bbox_inches="tight", pad_inches=0.0)
 
 def main_async(options, out_dir):
-	prefix = "setB-async-"
-	time_limit = 7200
 	file_list = ["async/mt_kahypar_async_optimized_64.csv", "async/mt_kahypar_d_64.csv", "async/mt_kahypar_q_64.csv", "async/bipart_64.csv", "async/zoltan_64.csv", "async/patoh_d_big.csv"]
-	width = options["width"] * 0.8 
-	aspect_ratio = 2.7
-	height = width / aspect_ratio
-	figsize = (width, height)
-
-	# main comparison
 	df = commons.read_files(file_list)
 	algos = commons.infer_algorithms_from_dataframe(df)
 	colors = commons.default_color_mapping()
 	colors["Mt-KaHyPar-Async"] = colors["hMetis-R"]
 	instances = commons.infer_instances_from_dataframe(df)
-		
-	## separate plots
-	ratios_df = performance_profiles.performance_profiles(algos, instances, df, objective="km1")
-	fig = performance_profiles.plot(ratios_df, colors=colors, figsize=figsize, width_scale=2.0)
-	fig.savefig(out_dir + prefix + "mt-kahypar-q_performance-profile.pdf", bbox_inches="tight", pad_inches=0.0)
-	
-	width = options['width'] * 0.6
-	aspect_ratio = 1.4
-	height = width / aspect_ratio
-	figsize = (width, height)
-	fig, ax = plt.subplots(figsize=figsize)
-	relative_runtimes_plot.construct_plot(df=df, ax=ax, baseline_algorithm="Mt-KaHyPar-Async", colors=colors, algos=algos, 
-	                                      seed_aggregator="mean", field="totalPartitionTime", time_limit=time_limit)
-	sb.move_legend(ax, loc="upper center", bbox_to_anchor=(0.5, -0.15), frameon=False, ncol=2)
-	fig.savefig(out_dir + prefix + "mt-kahypar-q_relative_slowdown.pdf", bbox_inches='tight', pad_inches=0.0)
+
+	fig = plt.figure(figsize=options['figsize'])
+	cpprs.combined_pp_rs(df, fig, baseline="Mt-KaHyPar-Async", colors=colors)
+	fig.savefig(out_dir + "async-setB.pdf", bbox_inches="tight", pad_inches=0.0)
 
 def print_speedups():
 	df = commons.read_files(list(glob.glob("mt_kahypar_q_*_scaling.csv")))
@@ -227,45 +153,26 @@ def effectiveness_tests_plot(options, out_dir):
 	df = df[df.threads == 10]
 	df2 = commons.read_files(others_file_list)
 	df = pd.concat([df, df2])
-		
-	width = options["width"] / 2
-	aspect_ratio = 1.65
-	height = width / aspect_ratio
-	figsize=(width, height)
 
-	for algo_tuple in itertools.product(["Mt-KaHyPar-D", "Mt-KaHyPar-Q"], ["hMetis-R", "KaHyPar-CA", "KaHyPar-HFC"]):
-	#for algo_tuple in [("Mt-KaHyPar-D", "KaHyPar-HFC")]:
+	for algo_tuple in itertools.product(["Mt-KaHyPar-Q"]
+	                                    , ["hMetis-R", "KaHyPar-CA", "KaHyPar-HFC", "Mt-KaHyPar-D"]
+	                                    ):
 		algos = list(algo_tuple)
 		virt_df = effectiveness_tests.create_virtual_instances(df, algos, num_repetitions=20)
-		# virt_df.to_csv("effectiveness-tests_" + algos[0] + "_" + algos[1] + ".csv")
-		# virt_df = pd.read_csv("effectiveness-tests_" + algos[0] + "_" + algos[1] + ".csv")
-		fig = infer(virt_df, commons.default_color_mapping(), figsize)
+		
+		fig = plt.figure(figsize=options['half_figsize'])
+		performance_profiles.infer_plot(virt_df, fig)
 		fig.savefig(out_dir + "effectiveness-tests_" + algos[0] + "_" + algos[1] + ".pdf", bbox_inches="tight", pad_inches=0.0)
 
-def effectiveness_tests_mt_kahypar_variants():
-	mt_kahypar_file_list = ["mt-kahypar-d-setA.csv", "mt-kahypar-q-setA.csv"]
-	df = commons.read_files(mt_kahypar_file_list)
-	df = df[df.threads == 10]
-	algos = ["Mt-KaHyPar-D", "Mt-KaHyPar-Q"]
-	virt_df = effectiveness_tests.create_virtual_instances(df, algos, num_repetitions=20)
-
-	width = 6 / 2
-	aspect_ratio = 1.65
-	height = width / aspect_ratio
-	figsize=(width, height)
-
-	fig = infer(virt_df, commons.default_color_mapping(), figsize)
-	fig.savefig("effectiveness-tests_" + algos[0] + "_" + algos[1] + ".pdf", bbox_inches="tight", pad_inches=0.0)
 
 
 def run_all(options, out_dir):
-	# max_batch_size(options, out_dir)
-	# mt_kahypar_speedup_plots(options, out_dir)
-	# increasing_threads(options, out_dir)
-	# main_setB(options, out_dir)
-	# main_setA(options, out_dir)
-	# main_async(options, out_dir)
-	# print_speedups()
-	# effectiveness_tests_plot(options, out_dir)
-	effectiveness_tests_mt_kahypar_variants()
+	max_batch_size(options, out_dir)
+	mt_kahypar_speedup_plots(options, out_dir)
+	increasing_threads(options, out_dir)
+	main_setB(options, out_dir)
+	main_setA(options, out_dir)
+	main_async(options, out_dir)
+	print_speedups()
+	effectiveness_tests_plot(options, out_dir)
 

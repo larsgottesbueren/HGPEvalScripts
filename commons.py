@@ -18,7 +18,7 @@ def is_algo_in_default_color_mapping(algo):
 
 def infer_color_mapping(algos):
 	if all([is_algo_in_default_color_mapping(algo) for algo in algos]):
-		return default_color_mapping
+		return default_color_mapping()
 	else:
 		return construct_new_color_mapping(algos)
 
@@ -61,7 +61,7 @@ def read_and_convert(file, options={}):
 	return conversion(pd.read_csv(file), options)
 	
 def read_file(files, options={}):
-	return read_and_conver(file, options)
+	return read_and_convert(files, options)
 
 def read_files(files, options={}):
 	return pd.concat(map(read_and_convert, files, [options for i in range(len(files))]))
