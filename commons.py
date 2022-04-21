@@ -8,7 +8,7 @@ def default_color_mapping():
 	mapping = construct_new_color_mapping(algos)
 
 	leftovers = ["Mt-KaHyPar-S", "Mt-KaHyPar-SDet", "Mt-KaHyPar-D-F", "Mt-KaHyPar-Q-F"]
-	extra_colors = ["dark purple", "fuchsia", "squash", "teal"]
+	extra_colors = ["dark purple", "fuchsia", "teal", "squash",]
 	for algo, color in zip(leftovers, extra_colors):
 		mapping[algo] = sb.xkcd_rgb[color]
 	return mapping
@@ -46,7 +46,7 @@ def conversion(df, options={}):
 	add_column_if_missing(df, 'failed', 'no')
 	add_column_if_missing(df, 'timeout', 'no')
 	df.rename(columns={'partitionTime' : 'totalPartitionTime', "num_threads" : "threads"}, inplace=True)
-	df["algorithm"].replace(to_replace={'MT-' : 'Mt-'}, regex=True, inplace=True)
+	df["algorithm"].replace(to_replace={'MT-' : 'Mt-', 'Mt-KaHyPar-HD':'Mt-KaHyPar-D-F'}, regex=True, inplace=True)
 
 	if "filter to threads" in options:
 		nthreads = int(options["filter to threads"])

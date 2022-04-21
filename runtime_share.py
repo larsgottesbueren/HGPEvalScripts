@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import scipy.stats.mstats
 import commons
 
-tfield = "totalPartitionTime"
-# tfield = "partitionTime"
 
 def aggregate(df, seed_aggregator="mean"):
 	keys = ["graph", "k", "epsilon"]
@@ -23,13 +21,13 @@ def clean(df):
 	df = df[(df.timeout == 'no') & (df.failed == 'no')]
 	return df
 
-def compute_fractions(df, fields):
+def compute_fractions(df, fields, tfield):
 	for f in fields:
 		df[f + "_fraction"] = df[f] / df[tfield]
 
-def plot(df, fields, sort_field, fig):
+def plot(df, fields, sort_field, fig, tfield="totalPartitionTime"):
 	
-	compute_fractions(df, fields)
+	compute_fractions(df, fields, tfield)
 	reorder(df, sort_field=sort_field)
 	totals = [sum(x) for x in zip(*[df[f] for f in fields])]
 	num_instances = len(df)

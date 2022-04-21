@@ -160,6 +160,21 @@ def print_speedups():
 		speedup_plots.print_speedups(df=df, field=field, seed_aggregator="median", min_sequential_time = 0)
 	
 
+def runtime_share(options, out_dir):
+	import runtime_share
+	fig = plt.figure(figsize=options['figsize'])
+	mapper = {	'lpTime':'LP', 'preprocessingTime':'Preprocessing', 
+				'coarseningTime':'Coarsening', 'ipTime':'Initial'
+				}
+	df = commons.read_file('speed_deterministic.csv')
+	df.rename(columns=mapper, inplace=True)
+	fields = list(mapper.values())
+	df = df[df.seed == 0]
+	df = runtime_share.clean(df)
+	runtime_share.plot(df, fields=fields, sort_field="Coarsening", fig=fig, tfield='totalPartitionTime')
+	fig.axes[0].spines['top'].set_visible(False)
+	fig.savefig(out_dir + "runtime_shares.pdf", bbox_inches='tight', pad_inches=0.0)
+
 
 def run_all(options, out_dir):
 	price_of_determinism(options, out_dir)
@@ -167,4 +182,5 @@ def run_all(options, out_dir):
 	bipart_speedup_plots(options, out_dir)
 	mt_kahypar_speedup_plots(options, out_dir)
 	main(options, out_dir)
+	runtime_share(options, out_dir)
 	print_speedups()

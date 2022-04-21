@@ -165,6 +165,66 @@ def effectiveness_tests_plot(options, out_dir):
 		fig.savefig(out_dir + "effectiveness-tests_" + algos[0] + "_" + algos[1] + ".pdf", bbox_inches="tight", pad_inches=0.0)
 
 
+def runtime_share(options, out_dir):
+	import runtime_share
+	fig = plt.figure(figsize=options['figsize'])
+	mapper = {	'fm_time':'FM refinement', 'label_propagation_time':'LP refinement', 'preprocessing_time':'preprocessing', 
+				'coarsening_time':'coarsening', 'initial_partitioning_time':'initial',
+				"batch_uncontraction_time" : "uncoarsening",
+				}
+	df = commons.read_file('mt_kahypar_q_64_scaling.csv')
+	df.rename(columns=mapper, inplace=True)
+	fields = list(mapper.values())
+	df = df[df.seed == 0]
+	df = runtime_share.clean(df)
+	runtime_share.plot(df, fields=fields, sort_field="FM refinement", fig=fig, tfield='totalPartitionTime')
+	fig.axes[0].spines['top'].set_visible(False)
+	fig.savefig(out_dir + "runtime_shares.pdf", bbox_inches='tight', pad_inches=0.0)
+
+def refinement_stats(options, out_dir):
+	df = pd.read_csv('mt-kahypar-q-refinement-stats.csv')
+
+	fraction_tuples = [
+		('lp_incorrect_gains', 'lp_moves'),
+		('lp_gain_reverts', 'lp_moves'),
+		('lp_balance_reverts', 'lp_moves'),
+		('lp_actual_gain_sum', 'lp_expected_gain_sum'),
+
+		('attributed_incorrect_gains', 'attributed_moves'),
+		('attributed_reverts', 'attributed_moves'),
+		('attributed_actual_gain_sum', 'attributed_expected_gain_sum'),
+
+		('rollback_incorrect_gains', 'rollback_moves'),
+		('rollback_reverts', 'rollback_moves'),
+		('rollback_actual_gain_sum', 'rollback_expected_gain_sum'),
+	]
+
+	labels = [
+		'LP gain wrong',
+		'LP gain revert',
+		'LP balance revert',
+		'LP gain',
+
+		'FM attributed gain wrong',
+		'FM attributed revert',
+		'FM attributed gain',
+		
+		'FM rollback gain wrong',
+		'FM rollback revert',
+		'FM rollback gain'
+	]
+
+	for (a,b), name in zip(fraction_tuples, labels):
+		df[name] = df[a] / df[b]
+	
+	df = df.select_dtypes(['number'])
+	unrolled = df.melt(id_vars=['k','epsilon','seed','threads'])
+
+	fig, ax = plt.subplots(figsize=options['figsize'])
+	import event_frequency
+	event_frequency.plot(unrolled, fig, ax, fields=labels)
+	fig.savefig(out_dir + "refinement_stats.pdf", bbox_inches='tight', pad_inches=0.0)
+
 
 def run_all(options, out_dir):
 	max_batch_size(options, out_dir)
@@ -175,4 +235,8 @@ def run_all(options, out_dir):
 	main_async(options, out_dir)
 	print_speedups()
 	effectiveness_tests_plot(options, out_dir)
+	runtime_share(options, out_dir)
+	refinement_stats(options, out_dir)
+
+
 

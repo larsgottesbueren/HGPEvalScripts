@@ -11,7 +11,7 @@ def create_virtual_instances(idf, algos, num_repetitions=20, instances=None, obj
 			  & (idf.timeout == 'no') & (idf.failed == 'no')
 			  & (idf.imbalance <= idf.epsilon)
 			].copy()
-	if len(df.algorithm.unique()) != 2:
+	if len(df.algorithm.unique()) > 2:
 		raise Exception("not exactly two algorithms selected for effectiveness tests. this can be in the algo list or the data frame")
 	
 	if instances == None:

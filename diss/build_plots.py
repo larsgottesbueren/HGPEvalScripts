@@ -91,12 +91,12 @@ os.chdir(this_dir)
 
 import default.plots
 os.chdir('default')
-default.plots.run_all(options, out_dir + "/default/")
+# default.plots.run_all(options, out_dir + "/default/")
 os.chdir(this_dir)
 
-# import flows.plots
+import flows.plots
 os.chdir('flows')
-#flows.plots.run_all(options, out_dir + "/flows/")
+flows.plots.run_all(options, out_dir + "/flows/")
 os.chdir(this_dir)
 
 import parameter_study.plots

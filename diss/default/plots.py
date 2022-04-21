@@ -167,23 +167,45 @@ def refinement_stats(options, out_dir):
 		('rollback_actual_gain_sum', 'rollback_expected_gain_sum'),
 	]
 
-	fig = plt.figure(figsize=options['figsize'])
+	labels = [
+		'LP gain wrong',
+		'LP gain revert',
+		'LP balance revert',
+		'LP gain',
+
+		'FM attributed gain wrong',
+		'FM attributed revert',
+		'FM attributed gain',
+		
+		'FM rollback gain wrong',
+		'FM rollback revert',
+		'FM rollback gain'
+	]
+
+	for (a,b), name in zip(fraction_tuples, labels):
+		df[name] = df[a] / df[b]
+	
+	df = df.select_dtypes(['number'])
+	unrolled = df.melt(id_vars=['k','epsilon','seed','threads'])
+
+	fig, ax = plt.subplots(figsize=options['figsize'])
+	import event_frequency
+	event_frequency.plot(unrolled, fig, ax, fields=labels)
+	fig.savefig(out_dir + "refinement_stats.pdf", bbox_inches='tight', pad_inches=0.0)
 
 
 def runtime_share(options, out_dir):
 	import runtime_share
 	fig = plt.figure(figsize=options['figsize'])
-	
-	mapper = {	'fmTime':'FM', 'lpTime':'LP', 'preprocessingTime':'Preprocessing', 
-				'coarseningTime':'Coarsening', 'ipTime':'Initial'
+	mapper = {	'fmTime':'FM refinement', 'lpTime':'LP refinement', 'preprocessingTime':'preprocessing', 
+				'coarseningTime':'coarsening', 'ipTime':'initial'
 				}
-
 	df = commons.read_file('mt-kahypar-d-64_binary.csv')
 	df.rename(columns=mapper, inplace=True)
 	fields = list(mapper.values())
 	df = df[df.seed == 0]
 	df = runtime_share.clean(df)
-	runtime_share.plot(df, fields=fields, sort_field="FM", fig=fig)
+	runtime_share.plot(df, fields=fields, sort_field="FM", fig=fig, tfield='totalPartitionTime')
 	fig.axes[0].spines['top'].set_visible(False)
 	fig.savefig(out_dir + "runtime_shares.pdf", bbox_inches='tight', pad_inches=0.0)
 
@@ -197,15 +219,17 @@ def mt_metis_design_choices(options, out_dir):
 
 def run_all(options, out_dir):
 
-	runtime_share(options, out_dir)
+	graph_experiments(options, out_dir)
 	exit()
 	refinement_stats(options, out_dir)
+
+	runtime_share(options, out_dir)
 
 	increasing_threads(options, out_dir)
 
 	main_setB(options, out_dir)
 	main_setA(options, out_dir)
-	graph_experiments(options, out_dir)
+
 	
 	mt_kahypar_speedup_plots(options, out_dir)
 	print_speedups()

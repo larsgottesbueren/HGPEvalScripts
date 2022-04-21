@@ -137,6 +137,7 @@ def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, yla
     fig, ax = plt.subplots(figsize=figsize)
     construct_plot(df=df, ax=ax, baseline_algorithm=baseline_algorithm, colors=colors, algos=algos, ylabel_fontsize=ylabel_fontsize, seed_aggregator=seed_aggregator, field=field)
     handles, labels = ax.get_legend_handles_labels()
+    ax.legend().remove()
     fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.08), frameon=False, ncol=2)
     fig.savefig(plotname + "_relative_slowdown.pdf", bbox_inches='tight')
     #fig.savefig(plotname + ".pdf", bbox_inches='tight')
