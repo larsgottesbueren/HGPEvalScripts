@@ -39,22 +39,19 @@ def compute_windowed_gmeans(speedups, window_size):
     # then only take the speedup column, and apply geometric mean to each window
     speedups["rolling_gmean_speedup"] = speedups.groupby('threads')["speedup"].transform(lambda x : x.rolling(window=window_size, min_periods=5).apply(scipy.stats.gmean))
 
-def print_speedups(df, field, min_sequential_time = 0, seed_aggregator="median"):
+def print_speedups(df, field, min_sequential_time = 0, seed_aggregator="median", thread_list = [64]):
     speedups = compute_speedups(df, field, seed_aggregator)
-    thread_list = list(df.threads.unique())
-    if 1 in thread_list:
-        thread_list.remove(1)
-
+    
     # print(thread_list)
-    thread_list = [64]
     print("geometric mean speedups")
     for th in thread_list:
         thdf = speedups[(speedups.threads == th) & (speedups.sequential_time >= min_sequential_time)]
-        print(scipy.stats.gmean(thdf.speedup))
+        print(th, round(scipy.stats.gmean(thdf.speedup), 2), round(len(thdf) / len(speedups[speedups.threads ==th]) * 100, 1))
     #print("max speedups")
-    for th in thread_list:
-        thdf = speedups[speedups.threads == th]
+    #for th in thread_list:
+    #    thdf = speedups[speedups.threads == th]
     #    print(thdf.speedup.max())
+    #    print(thdf.loc[thdf.speedup.idxmax()])
     #print("> 64")
     #print(speedups[speedups.speedup > 64])
 
@@ -62,7 +59,8 @@ def scalability_plot(df, field, ax, thread_colors=None,
                      show_scatter=True, show_rolling_gmean=True, 
                      display_labels=True, display_legend=True,
                      xscale=None, yscale=None, alpha=0.2,
-                     seed_aggregator=None, window_size=50, filter_tiny_outlier_threshold=None):
+                     seed_aggregator=None, window_size=50,
+                     filter_tiny_outlier_threshold=None, filter_large_outlier_threshold=None):
     
     
     speedups = compute_speedups(df, field, seed_aggregator)
@@ -71,6 +69,11 @@ def scalability_plot(df, field, ax, thread_colors=None,
         if x > 0:
             print(x, "tiny outlier speedups below", filter_tiny_outlier_threshold, "were filtered")
             speedups = speedups[speedups.speedup > filter_tiny_outlier_threshold]
+    if filter_large_outlier_threshold != None:
+        x = len(speedups[speedups.speedup > filter_large_outlier_threshold])
+        if x > 0:
+            print(x, "large outlier speedups above", filter_large_outlier_threshold, "were filtered")
+            speedups = speedups[speedups.speedup <= filter_large_outlier_threshold]
 
     compute_windowed_gmeans(speedups, window_size)
     

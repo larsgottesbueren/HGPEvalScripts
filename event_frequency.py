@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.stats.mstats
 from collections import defaultdict
 
-def plot(df, fig, ax, fields, hue=None, colors=None):
+def plot(df, fig, ax, fields, hue=None, colors=None, display_legend=True):
 
 	boxprops = dict(linewidth=0.9, zorder=2, fill=False)
 	rem_props = dict(linestyle='-', linewidth=0.9)
@@ -44,13 +44,14 @@ def plot(df, fig, ax, fields, hue=None, colors=None):
 		                          order=fields
 		                          )
 
-	
+	ax.set_yscale('log', base=10)
+	# ax.set_yticks([0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5])
 	plt.setp(ax.xaxis.get_majorticklabels(), rotation=20, ha="right", rotation_mode="anchor")
 
 	ax.set_ylabel('frequency or (actual/expected gain)')
 	ax.set_xlabel('')
 
-	if hue != None:
+	if hue != None and display_legend:
 		num_legend_entries = len(df[hue].unique())
 				
 		handles, labels = ax.get_legend_handles_labels()

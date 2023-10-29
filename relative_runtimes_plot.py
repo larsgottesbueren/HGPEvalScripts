@@ -8,10 +8,12 @@ import scipy.stats
 import math
 import copy
 
-def compute_relative_runtimes(df, algos, baseline_algorithm, field, seed_aggregator, time_limit):
+def compute_relative_runtimes(input_df, algos, baseline_algorithm, field, seed_aggregator, time_limit):
+    #print(input_df[input_df['failed'] == 'yes'])
+    #df = input_df[input_df['failed'] == 'no']
+    df = input_df
     keys =["graph", "k", "epsilon"]
 
-    
     def aggregate_func(series):
         f = list(filter(lambda x : x < time_limit, series))
         if len(f) == 0:
@@ -24,7 +26,7 @@ def compute_relative_runtimes(df, algos, baseline_algorithm, field, seed_aggrega
     df = df.groupby(keys + ["algorithm"])[field].agg(aggregate_func).reset_index()
         
     for algo in algos:
-        print(algo, "gmean time", scipy.stats.gmean(df[df.algorithm == algo][field]))
+        print(algo, "gmean time", round(scipy.stats.gmean(df[df.algorithm == algo][field]), 2))
 
     baseline_df = df[df.algorithm == baseline_algorithm].copy()
     baseline_df.set_index(keys, inplace=True)
@@ -43,9 +45,11 @@ def compute_relative_runtimes(df, algos, baseline_algorithm, field, seed_aggrega
                     return algo_timeout
             if baseline_df.loc[baseline_key][field] > time_limit:
                 return baseline_timeout
+            if row[field] == 0 or baseline_df.loc[baseline_key][field] == 0:
+                return 1
             return row[field] / baseline_df.loc[baseline_key][field]
         else:
-            print("relative_runtimes_plot: missing entry in baseline_df")
+            print("relative_runtimes_plot: missing entry in baseline_df", row)
             return row[field] / time_limit
     
     
@@ -104,7 +108,7 @@ def construct_plot(df, ax, baseline_algorithm, colors, algos=None, ylabel_fontsi
         ax.set_ylabel('slowdown rel. to ' + baseline_algorithm, fontsize=ylabel_fontsize)
     ax.set_xlabel('instances')
     ax.grid(axis='y', which='both', ls='dashed')
-    ax.set_yscale('log')
+    # ax.set_yscale('log')
 
     step = 500
     if n_instances < 50:
@@ -120,7 +124,7 @@ def construct_plot(df, ax, baseline_algorithm, colors, algos=None, ylabel_fontsi
         custom_ticks.append(n_instances)
 
     # plt.xticks(custom_ticks)
-
+    
     ticks = [10 ** i for i in range(int(math.log10(baseline_timeout_ratio)) + 1, int(math.log10(algo_timeout_ratio)))] # no -1 in the end since it's exclusive!
     tick_labels = copy.copy(ticks)
     if show_baseline_timeout:
@@ -129,9 +133,9 @@ def construct_plot(df, ax, baseline_algorithm, colors, algos=None, ylabel_fontsi
     if show_algo_timeout:
         ticks.append(algo_timeout_ratio)
         tick_labels.append(R'\ding{99}')
-    ax.set_yticks(ticks)
-    ax.set_yticklabels(tick_labels)
-
+    #ax.set_yticks(ticks)
+    #ax.set_yticklabels(tick_labels)
+    
 
 def plot(plotname, df, baseline_algorithm, colors, algos=None, figsize=None, ylabel_fontsize=None, seed_aggregator="mean", field='totalPartitionTime', time_limit=7200):
     fig, ax = plt.subplots(figsize=figsize)

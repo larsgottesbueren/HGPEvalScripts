@@ -8,20 +8,22 @@ import matplotlib.gridspec as grd
 import matplotlib.ticker
 import seaborn as sb
 
+import combine_performance_profile_and_relative_slowdown as cpprs
+
 def price_of_determinism(options, out_dir):
 	df = commons.read_and_convert("component_comparison_preprocessing.csv")
 	fig = plt.figure(figsize=options['half_figsize'])
-	performance_profiles.infer_plot(df, fig, algos=algos, colors=colors)
+	performance_profiles.infer_plot(df, fig)
 	fig.savefig(out_dir + "component_comparison_preprocessing.pdf", bbox_inches="tight", pad_inches=0.0)
 
 	df = commons.read_and_convert("component_comparison_refinement.csv")
 	fig = plt.figure(figsize=options['half_figsize'])
-	performance_profiles.infer_plot(df, fig, algos=algos, colors=colors)
+	performance_profiles.infer_plot(df, fig)
 	fig.savefig(out_dir + "component_comparison_refinement.pdf", bbox_inches="tight", pad_inches=0.0)
 
 	df = commons.read_and_convert("component_comparison_coarsening.csv")
 	fig = plt.figure(figsize=options['half_figsize'])
-	performance_profiles.infer_plot(df, fig, algos=algos, colors=colors)
+	performance_profiles.infer_plot(df, fig)
 	fig.savefig(out_dir + "component_comparison_coarsening.pdf", bbox_inches="tight", pad_inches=0.0)
 	# relative_runtimes_plot.plot("component_comparison_coarsening", df, "Mt-KaHyPar-SDet", colors= commons.construct_new_color_mapping(algos), field="coarseningTime")
 
@@ -34,24 +36,24 @@ def parameter_study(options, out_dir):
 	# refinement
 	df = commons.read_and_convert("deterministic_parameterstudy_synclp_subrounds.csv")
 	handles, labels = performance_profiles.infer_plot(df, fig, external_subplot=outer_grid[0][1], display_legend=False)
-	outer_grid[0][1].legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.22), frameon=False, ncol=2)
+	outer_grid[0][1].legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.23), frameon=False, ncol=2)
 
 	# coarsening
 	df = commons.read_and_convert("deterministic_parameterstudy_coarsening_subrounds.csv")
 	handles, labels = performance_profiles.infer_plot(df, fig, external_subplot=outer_grid[1,0], display_legend=False)
-	outer_grid[1][0].legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.22), frameon=False, ncol=2)
+	outer_grid[1][0].legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.23), frameon=False, ncol=2)
 
 	# preprocessing
 	df = commons.read_and_convert("deterministic_parameterstudy_prepro_subrounds.csv")
 	handles, labels = performance_profiles.infer_plot(df, fig, external_subplot=outer_grid[0,0], display_legend=False)
-	outer_grid[0][0].legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.22), frameon=False, ncol=2)
+	outer_grid[0][0].legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.23), frameon=False, ncol=2)
 	
 	# preprocessing vs no preprocessing 
 	df = commons.read_and_convert("no_preprocessing.csv")
 	handles, labels = performance_profiles.infer_plot(df, fig, external_subplot=outer_grid[1,1], display_legend=False)
-	outer_grid[1][1].legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.22), frameon=False, ncol=1)
+	outer_grid[1][1].legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.23), frameon=False, ncol=1)
 
-	plt.subplots_adjust(wspace=0.22, hspace=0.6)
+	plt.subplots_adjust(wspace=0.22, hspace=0.65)
 	fig.savefig(out_dir + "parameter_study.pdf", bbox_inches="tight", pad_inches=0.0)
 
 def bipart_speedup_plots(options, out_dir):
@@ -163,8 +165,8 @@ def print_speedups():
 def runtime_share(options, out_dir):
 	import runtime_share
 	fig = plt.figure(figsize=options['figsize'])
-	mapper = {	'lpTime':'LP', 'preprocessingTime':'Preprocessing', 
-				'coarseningTime':'Coarsening', 'ipTime':'Initial'
+	mapper = {	'lpTime':'LP', 'ipTime':'Initial', 'preprocessingTime':'Preprocessing', 
+				'coarseningTime':'Coarsening',
 				}
 	df = commons.read_file('speed_deterministic.csv')
 	df.rename(columns=mapper, inplace=True)
@@ -177,10 +179,14 @@ def runtime_share(options, out_dir):
 
 
 def run_all(options, out_dir):
-	price_of_determinism(options, out_dir)
+	print("deterministic")
 	parameter_study(options, out_dir)
+	main(options, out_dir)
+	print_speedups()
+
+	runtime_share(options, out_dir)
+	price_of_determinism(options, out_dir)
 	bipart_speedup_plots(options, out_dir)
 	mt_kahypar_speedup_plots(options, out_dir)
-	main(options, out_dir)
-	runtime_share(options, out_dir)
-	print_speedups()
+
+	plt.close('all')

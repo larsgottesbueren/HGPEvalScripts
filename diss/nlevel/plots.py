@@ -19,21 +19,22 @@ def max_batch_size(options, out_dir):
 	figsize=(width, height)
 
 	df = commons.read_files(list(glob.glob("max-batch-size/*.csv")))
+	df = df[df.max_batch_size.isin([1,100,200,1000,10000])]
 	all_algos = commons.infer_algorithms_from_dataframe(df)
 	colors = commons.construct_new_color_mapping(all_algos)
 
 	fig = plt.figure(figsize=options['half_figsize'])
-	performance_profiles.infer_plot(df[(df.max_batch_size == 1) | (df.max_batch_size == 100)], fig, colors=colors)
+	performance_profiles.infer_plot(df[(df.max_batch_size == 1) | (df.max_batch_size == 100)], fig, colors=colors, algos=["$b_{\max} = 1$","$b_{\max} = 100$"])
 	fig.savefig(out_dir + "max_batch_size_1_100.pdf", bbox_inches="tight", pad_inches=0.0)
 
 	fig = plt.figure(figsize=options['half_figsize'])
 	performance_profiles.infer_plot(df[(df.max_batch_size == 100) | (df.max_batch_size == 200) | (df.max_batch_size == 1000)], 
-	                                fig, colors=colors)
+	                                fig, algos=["$b_{\max} = 100$","$b_{\max} = 200$","$b_{\max} = 1000$"], colors=colors)
 	fig.savefig(out_dir + "max_batch_size_100_200_1000.pdf", bbox_inches="tight", pad_inches=0.0)
 
 	fig = plt.figure(figsize=options['half_figsize'])
 	performance_profiles.infer_plot(df[(df.max_batch_size == 200) | (df.max_batch_size == 1000) | (df.max_batch_size == 10000)],
-									fig, colors=colors)
+									fig, algos=["$b_{\max} = 200$","$b_{\max} = 1000$","$b_{\max} = 10000$"], colors=colors)
 	fig.savefig(out_dir + "max_batch_size_200_1000_10000.pdf", bbox_inches="tight", pad_inches=0.0)
 
 
@@ -116,9 +117,39 @@ def main_setA(options, out_dir):
 	df2 = commons.read_files(others_file_list)
 	df = pd.concat([df, df2])
 
+	fig = plt.figure(figsize=options['half_figsize'])
+	performance_profiles.infer_plot(df, fig, algos=["Mt-KaHyPar-Q", "hMetis-R"])
+	fig.savefig(out_dir + "mt-kahypar-q_vs_hmetis-r.pdf", bbox_inches="tight", pad_inches=0.0)
+
+	fig = plt.figure(figsize=options['half_figsize'])
+	performance_profiles.infer_plot(df, fig, algos=["Mt-KaHyPar-Q", "Mt-KaHyPar-D"])
+	fig.savefig(out_dir + "mt-kahypar-q_vs_mt-kahypar-d.pdf", bbox_inches="tight", pad_inches=0.0)
+
 	fig = plt.figure(figsize=options['figsize'])
 	cpprs.combined_pp_rs(df, fig, baseline="Mt-KaHyPar-Q", time_limit=28800)
-	fig.savefig(out_dir + "setA.pdf", bbox_inches="tight", pad_inches=0.0)
+	fig.savefig(out_dir + "setA.pdf", bbox_inches="tight", pad_inches=0.0)	
+
+	colors = commons.default_color_mapping()
+	colors["Mt-KaHyPar-Q 10"] = colors["Mt-KaHyPar-Q"]
+	colors["Mt-KaHyPar-Q 1"] = colors["Mt-KaHyPar-Q"]
+
+	df["algorithm"].replace(to_replace={"Mt-KaHyPar-Q" : "Mt-KaHyPar-Q 10"}, inplace=True)
+	fig = plt.figure(figsize=options['half_figsize'])
+	performance_profiles.infer_plot(df, fig, algos=["Mt-KaHyPar-Q 10", "KaHyPar-CA"], colors=colors)
+	fig.savefig(out_dir + "mt-kahypar-q_vs_kahypar-ca.pdf", bbox_inches="tight", pad_inches=0.0)
+
+
+	df = commons.read_files(mt_kahypar_file_list)
+	df = df[df.threads == 1]
+	df["algorithm"].replace(to_replace={"Mt-KaHyPar-Q" : "Mt-KaHyPar-Q 1"}, inplace=True)
+	df2 = commons.read_files(others_file_list)
+	df = pd.concat([df, df2])
+
+	fig = plt.figure(figsize=options['half_figsize'])
+	performance_profiles.infer_plot(df, fig, algos=["Mt-KaHyPar-Q 1", "KaHyPar-CA"], colors=colors)
+	fig.savefig(out_dir + "mt-kahypar-q_vs_kahypar-ca_1core.pdf", bbox_inches="tight", pad_inches=0.0)
+
+
 
 def main_setB(options, out_dir):
 	df = commons.read_files(["mt-kahypar-d-64.csv", "mt-kahypar-q-64.csv", "bipart-64.csv", "zoltan-mt-bench.csv", "patoh-d-mt-bench.csv"])
@@ -144,18 +175,21 @@ def print_speedups():
 	fields = ["totalPartitionTime", "coarsening_time", "initial_partitioning_time", "batch_uncontraction_time", "label_propagation_time", "fm_time"]
 	for field in fields:
 		print(field)
-		speedup_plots.print_speedups(df=df, field=field, seed_aggregator="median", min_sequential_time = 0)
+		speedup_plots.print_speedups(df=df, field=field, seed_aggregator="median", min_sequential_time = 0, thread_list=[4, 16,64])
+	for field in fields:
+		print(field, ">100s")
+		speedup_plots.print_speedups(df=df, field=field, seed_aggregator="median", min_sequential_time = 100, thread_list=[16,64])
 	
 def effectiveness_tests_plot(options, out_dir):
 	mt_kahypar_file_list = ["mt-kahypar-d-setA.csv", "mt-kahypar-q-setA.csv"]
-	others_file_list = ["hmetis_r_setA.csv", "kahypar_ca_setA.csv", "kahypar_hfc_setA.csv"]
+	others_file_list = ["hmetis_r_setA.csv", "kahypar_ca_setA.csv", "kahypar_hfc_setA.csv", "patoh_q_setA.csv"]
 	df = commons.read_files(mt_kahypar_file_list)
 	df = df[df.threads == 10]
 	df2 = commons.read_files(others_file_list)
 	df = pd.concat([df, df2])
 
 	for algo_tuple in itertools.product(["Mt-KaHyPar-Q"]
-	                                    , ["hMetis-R", "KaHyPar-CA", "KaHyPar-HFC", "Mt-KaHyPar-D"]
+	                                    , ["hMetis-R", "KaHyPar-CA", "KaHyPar-HFC", "Mt-KaHyPar-D", "PaToH-Q"]
 	                                    ):
 		algos = list(algo_tuple)
 		virt_df = effectiveness_tests.create_virtual_instances(df, algos, num_repetitions=20)
@@ -164,20 +198,58 @@ def effectiveness_tests_plot(options, out_dir):
 		performance_profiles.infer_plot(virt_df, fig)
 		fig.savefig(out_dir + "effectiveness-tests_" + algos[0] + "_" + algos[1] + ".pdf", bbox_inches="tight", pad_inches=0.0)
 
+def effectiveness_tests_plot_setB(options, out_dir):
+	mt_kahypar_file_list = ["mt-kahypar-d-64.csv", "mt-kahypar-q-64.csv"]
+	#others_file_list = ["hmetis_r_setA.csv", "kahypar_ca_setA.csv", "kahypar_hfc_setA.csv", "patoh_q_setA.csv"]
+	df = commons.read_files(mt_kahypar_file_list)
+
+	for algo_tuple in itertools.product(["Mt-KaHyPar-Q"]
+	                                    , ["Mt-KaHyPar-D"]
+	                                    ):
+		algos = list(algo_tuple)
+		virt_df = effectiveness_tests.create_virtual_instances(df, algos, num_repetitions=20)
+		
+		fig = plt.figure(figsize=options['half_figsize'])
+		performance_profiles.infer_plot(virt_df, fig)
+		fig.savefig(out_dir + "effectiveness-tests_setB_" + algos[0] + "_" + algos[1] + ".pdf", bbox_inches="tight", pad_inches=0.0)
+
+
 
 def runtime_share(options, out_dir):
 	import runtime_share
 	fig = plt.figure(figsize=options['figsize'])
-	mapper = {	'fm_time':'FM refinement', 'label_propagation_time':'LP refinement', 'preprocessing_time':'preprocessing', 
+	'''
+	mapper = {	'label_propagation_time':'localized LP', 'preprocessing_time':'preprocessing', 
 				'coarsening_time':'coarsening', 'initial_partitioning_time':'initial',
-				"batch_uncontraction_time" : "uncoarsening",
+				"batch_uncontraction_time" : "uncoarsening", 'fm_time':'localized FM',
+				"global_refinement" : "global refinement"
 				}
-	df = commons.read_file('mt_kahypar_q_64_scaling.csv')
+	'''
+	mapper = {	
+				'fm':'localized FM',
+				'coarsening':'coarsening', 
+				'initial_partitioning':'initial',
+				'global_fm' : 'global FM',
+				'preprocessing':'preprocessing', 
+				'label_propagation':'localized LP', 
+				}
+	df = commons.read_file('mt-kahypar-q-refinement-stats.csv')
+	df['uncoarsening'] = [sum(x) for x in zip(*[df[f] for f in 
+	                                          [	
+												'batch_uncontractions',
+												'create_batch_uncontraction_hierarchy',
+												'create_versioned_batches',
+												'finalize_contraction_tree',
+												'prepare_hg_for_uncontraction', 
+												'restore_single_pin_and_parallel_nets',
+	                                         ]
+	                                          ])]
 	df.rename(columns=mapper, inplace=True)
-	fields = list(mapper.values())
+	print(df[['uncoarsening', 'localized LP', 'seed']])
+	fields = ['uncoarsening'] + list(mapper.values())
 	df = df[df.seed == 0]
 	df = runtime_share.clean(df)
-	runtime_share.plot(df, fields=fields, sort_field="FM refinement", fig=fig, tfield='totalPartitionTime')
+	runtime_share.plot(df, fields=fields, sort_field="uncoarsening", fig=fig, tfield='totalPartitionTime')
 	fig.axes[0].spines['top'].set_visible(False)
 	fig.savefig(out_dir + "runtime_shares.pdf", bbox_inches='tight', pad_inches=0.0)
 
@@ -225,18 +297,46 @@ def refinement_stats(options, out_dir):
 	event_frequency.plot(unrolled, fig, ax, fields=labels)
 	fig.savefig(out_dir + "refinement_stats.pdf", bbox_inches='tight', pad_inches=0.0)
 
+def gain_contributions(options, out_dir):
+	import runtime_share
+	fig = plt.figure(figsize=options['figsize'])
+	df = commons.read_file('mt-kahypar-q-refinement-stats.csv')
+	mapper = {	
+				'lp_actual_gain_sum' : 'LP gain',
+				'rollback_actual_gain_sum' : 'FM gain',
+				}
+	# what about negative values for rebalancing???
+	df.rename(columns=mapper, inplace=True)
+	df = df[df.seed == 0]
+	df['total gain'] = df['FM gain'] + df['LP gain']
+	runtime_share.plot(df[df['total gain'] > 0].copy(), fields=["LP gain", "FM gain"], sort_field="LP gain", fig=fig, tfield='total gain')
+	fig.axes[0].spines['top'].set_visible(False)
+	fig.axes[0].set_ylabel('fractional gain contribution')
+	
+	fig.savefig(out_dir + "gain_contributions.pdf", bbox_inches='tight', pad_inches=0.0)
+
 
 def run_all(options, out_dir):
+	print("nlevel")
+	return
+	effectiveness_tests_plot(options, out_dir)
+	main_setA(options, out_dir)
+	print_speedups()
 	max_batch_size(options, out_dir)
+	gain_contributions(options, out_dir)
+
+	main_setB(options, out_dir)
+	main_async(options, out_dir)
+
+	effectiveness_tests_plot_setB(options, out_dir)
+	refinement_stats(options, out_dir)
+	runtime_share(options, out_dir)
 	mt_kahypar_speedup_plots(options, out_dir)
 	increasing_threads(options, out_dir)
-	main_setB(options, out_dir)
-	main_setA(options, out_dir)
-	main_async(options, out_dir)
-	print_speedups()
-	effectiveness_tests_plot(options, out_dir)
-	runtime_share(options, out_dir)
-	refinement_stats(options, out_dir)
+	
+
+	plt.close('all')
+
 
 
 

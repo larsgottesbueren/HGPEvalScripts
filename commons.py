@@ -22,7 +22,18 @@ def infer_color_mapping(algos):
 	else:
 		return construct_new_color_mapping(algos)
 
+def construct_color_mapping_with_default_colors(algos):
+	assert(len(algos) <= 10)
+	colors = default_color_mapping()
+	colors = { key : val for key, val in colors.items() if key in algos }
+	
+	unmapped = list(sorted(set(algos) - colors.keys()))
+	palette = list(sorted(set(sb.color_palette()) - set(colors.values())))
+	colors.update( dict(zip(unmapped, palette)) )
+	return colors
+
 def construct_new_color_mapping(algos):
+	assert(len(algos) <= 10)
 	return dict(zip(algos, sb.color_palette()))
 
 def infer_algorithms_from_dataframe(df):
@@ -45,6 +56,7 @@ def add_column_if_missing(df, column, value):
 def conversion(df, options={}):
 	add_column_if_missing(df, 'failed', 'no')
 	add_column_if_missing(df, 'timeout', 'no')
+	add_column_if_missing(df, 'k', '2')
 	df.rename(columns={'partitionTime' : 'totalPartitionTime', "num_threads" : "threads"}, inplace=True)
 	df["algorithm"].replace(to_replace={'MT-' : 'Mt-', 'Mt-KaHyPar-HD':'Mt-KaHyPar-D-F'}, regex=True, inplace=True)
 

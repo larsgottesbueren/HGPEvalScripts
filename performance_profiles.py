@@ -17,7 +17,7 @@ from matplotlib.ticker import (AutoMinorLocator, FixedLocator)
 #import tikzplotlib
 
 max_objective = 2147483647
-time_limit = 28800
+#time_limit = 28800
 no_algo_solved_ratio = max_objective-1
 imbalanced_ratio = max_objective-2
 timeout_ratio = max_objective-3
@@ -25,14 +25,23 @@ timeout_ratio = max_objective-3
 performance_profile_fraction_scaling = 1
 
 # Returns for each algorithm the tau's at which the number of instances solved within tau*best jumps
-def performance_profiles(algos, instances, input_df, objective="km1"):
+def performance_profiles(algos, instances, input_df, time_limit=28800, objective="km1"):
 	df = input_df[input_df.algorithm.isin(algos)].copy()
 
 	instance_grouper = ["graph", "k", "epsilon"]
 	in_time = df[(df.timeout == 'no') & (df.totalPartitionTime < time_limit)]
-	balanced = in_time[(in_time.imbalance <= in_time.epsilon) & (in_time.failed == "no")].copy()
-	in_time_index = in_time.groupby(instance_grouper + ["algorithm"]).mean()
-	balanced_index = balanced.groupby(instance_grouper + ["algorithm"]).mean()
+	balanced = in_time[
+		 (in_time.imbalance <= in_time.epsilon + 1e-5) &
+		(in_time.failed == "no")
+		].copy()
+	
+	
+	in_time_index = in_time.groupby(instance_grouper + ["algorithm"]).mean(numeric_only=True)
+	balanced_index = balanced.groupby(instance_grouper + ["algorithm"]).mean(numeric_only=True)
+	'''
+	in_time_index = in_time.groupby(instance_grouper + ["algorithm"]).min()
+	balanced_index = balanced.groupby(instance_grouper + ["algorithm"]).min()
+	'''
 	best_per_instance = balanced_index[objective].groupby(level=instance_grouper).min()
 
 	ratios = defaultdict(list)
@@ -73,13 +82,13 @@ def performance_profiles(algos, instances, input_df, objective="km1"):
 				# print("timeout", G,k,algo)
 				r = timeout_ratio
 			ratios[algo].append(r)
-			#if r > 1.1:
-			#	print(algo, G, k, r)
+			if r > 1.05 and "parriba" in algo:
+				print(algo, G, k, r)
 
 	max_ratio = max( max(ratios[algo]) for algo in algos )
 	print("max ratio = ", max_ratio)
 	for algo in algos:
-		print(algo, "solved", len(solved[algo]), "instances. gmean performance ratio", scipy.stats.gmean(ratios[algo]))
+		print(algo, "solved", len(solved[algo]), "instances. gmean performance ratio", scipy.stats.gmean(ratios[algo]), "max ratio=", max(ratios[algo]))
 
 	last_drawn_ratio = min(imbalanced_ratio, max_ratio)
 	
@@ -150,6 +159,7 @@ def plot(df, colors, fig, external_subplot, display_legend=True, title=None,
 	for algo in algos:
 		algo_df = df[df.algorithm == algo]
 		for i, ax in enumerate(axes):
+			#print(algo_df[(algo_df.ratio >= bb[i]) & (algo_df.ratio <= bb[i+1])])
 			ax.plot(
 			        algo_df["ratio"], algo_df["fraction"],
 			        color=colors[algo], lw=2.2, label=algo,
@@ -196,7 +206,7 @@ def plot(df, colors, fig, external_subplot, display_legend=True, title=None,
 		axes[i].set_xlim(bb[i], bb[i+1])
 		axes[i].set_ylim(-0.01, ymax)
 		if grid:
-			axes[i].grid(b=True, axis='both', which='major', ls='dashed')
+			axes[i].grid(visible=True, axis='both', which='major', ls='dashed')
 
 	if nbuckets > 1:
 		x0 = [1, 1.05, 1.1]
@@ -229,7 +239,7 @@ def plot(df, colors, fig, external_subplot, display_legend=True, title=None,
 		axes[nbuckets - 1].set_xticks(ticks)
 		axes[nbuckets - 1].set_xticklabels(tick_labels)
 	
-	if nbuckets == 3 and 2.5 in axes[2].get_xticks():
+	if nbuckets == 3 and 2.5 in axes[2].get_xticks() and max_ratio >= 4:
 		axes[2].set_xticks(np.arange(4.0, last_drawn_ratio, step=2.0))
 
 
@@ -261,7 +271,7 @@ def plot(df, colors, fig, external_subplot, display_legend=True, title=None,
 	#tikzplotlib.save(plotname + "_performance_profile.tikz")
 	# plt.close(fig)
 
-def infer_plot(df, fig, external_subplot=None, colors=None, algos=None, instances=None, display_legend=True):
+def infer_plot(df, fig, external_subplot=None, colors=None, algos=None, instances=None, display_legend=True, objective="km1"):
 	if algos == None:
 		algos = commons.infer_algorithms_from_dataframe(df)
 	if instances == None:
@@ -271,7 +281,7 @@ def infer_plot(df, fig, external_subplot=None, colors=None, algos=None, instance
 	if external_subplot == None:
 		outer_grid = grd.GridSpec(nrows=1, ncols=1, wspace=0.0, hspace=0.0, width_ratios=[1.0])
 		external_subplot = outer_grid[0]
-	ratios_df = performance_profiles(algos, instances, df, objective="km1")
+	ratios_df = performance_profiles(algos, instances, df, objective=objective)
 	handles, labels = plot(ratios_df, fig=fig, external_subplot=external_subplot, colors=colors, display_legend=display_legend)
 	if display_legend:
 		legend_inside(fig, ncol=1)

@@ -26,13 +26,15 @@ def compute_fractions(df, fields, tfield):
 		df[f + "_fraction"] = df[f] / df[tfield]
 
 def plot(df, fields, sort_field, fig, tfield="totalPartitionTime"):
-	
+	if tfield == None:
+		tfield = 'total_420'
+		df[tfield] = [sum(x) for x in zip(*[df[f] for f in fields])]
 	compute_fractions(df, fields, tfield)
 	reorder(df, sort_field=sort_field)
 	totals = [sum(x) for x in zip(*[df[f] for f in fields])]
 	num_instances = len(df)
 	x_values = [i for i in range(1, num_instances + 1)]
-	colors = commons.construct_new_color_mapping(fields + ["Other"])
+	colors = commons.construct_new_color_mapping(fields + ["other"])
 	prev = [0.0 for x in range(num_instances)]
 	for f in fields:
 		fractions = [i/j for i,j in zip(df[f], df[tfield])]
@@ -40,9 +42,13 @@ def plot(df, fields, sort_field, fig, tfield="totalPartitionTime"):
 		prev = [p + f for p,f in zip(prev, fractions)]
 
 	others = [(at - t)/at for t,at in zip(totals, df[tfield])]
-	sb.barplot(x=x_values, y=others, bottom=prev, label="Other", color=colors["Other"])
+	if any(x > 0 for x in others):
+		sb.barplot(x=x_values, y=others, bottom=prev, label="other", color=colors["other"])
 	#plt.legend()
 	plt.legend(loc='lower right')
+
+	fig.axes[0].set_xlabel('instances')
+	fig.axes[0].set_ylabel('running time share')
 
 	step_size = 10
 	if num_instances > 150:
